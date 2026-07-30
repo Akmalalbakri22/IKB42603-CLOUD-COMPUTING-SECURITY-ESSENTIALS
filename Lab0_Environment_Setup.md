@@ -1,11 +1,14 @@
 # Lab 0: Lab Environment Setup Report
 
 **Course:** IKB42603 Cloud Computing Security Essentials  
+
 **Institution:** Universiti Kuala Lumpur Malaysian Institute of Information Technology (UniKL MIIT)  
+
 **Name:** Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
 
 **Student ID:** 52215124003
 **Lab Title:** Environment-Setup.md  
+
 **Reference Guide:** `IKB42603_Lab0_Environment_Setup_Cheatsheet.pdf`  
 
 ---
