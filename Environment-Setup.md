@@ -213,6 +213,11 @@ aws $EP sts get-caller-identity
 ### Screenshot 2: Docker Hello-World Container Verification
 ![Docker Hello-World Container Verification](Evidence/image2.png)
 
+<img width="614" height="388" alt="image" src="https://github.com/user-attachments/assets/e78dd403-6a76-4f26-9699-415bab04ec9d" />
+
+
+
+
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
   ```bash
@@ -230,6 +235,11 @@ aws $EP sts get-caller-identity
 
 ### Screenshot 3: AWS CLI v2 Version Verification
 ![AWS CLI v2 Version Verification](Evidence/image3.png)
+
+<img width="615" height="72" alt="image" src="https://github.com/user-attachments/assets/06d88cf4-eb2a-43a8-9523-0e56262e392f" />
+
+
+
 
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
@@ -262,6 +272,11 @@ aws $EP sts get-caller-identity
 ### Screenshot 5: Kubernetes Cluster Context & Health Status
 ![Kubernetes Cluster Context & Health Status](Evidence/image5.png)
 
+<img width="585" height="144" alt="image" src="https://github.com/user-attachments/assets/7997debb-50cf-4dcb-8c28-e17df8065955" />
+
+
+
+
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
   ```bash
@@ -279,6 +294,11 @@ aws $EP sts get-caller-identity
 ### Screenshot 6: Helper Security Tools Version Verification
 ![Helper Security Tools Version Verification](Evidence/image6.png)
 
+<img width="622" height="237" alt="image" src="https://github.com/user-attachments/assets/22fb81d5-9555-4fc3-87d7-cc7387b2c573" />
+
+
+
+
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
   ```bash
@@ -294,6 +314,12 @@ aws $EP sts get-caller-identity
 
 ### Screenshot 7: LocalStack Docker Pull & Container Execution
 ![LocalStack Docker Pull & Container Execution](Evidence/image7.png)
+
+<img width="624" height="428" alt="image" src="https://github.com/user-attachments/assets/d93d1eaa-fedc-4ba9-9dcd-f9786d7f51a3" />
+
+
+
+
 
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
@@ -314,6 +340,11 @@ aws $EP sts get-caller-identity
 ### Screenshot 8: LocalStack Health Check Output
 ![LocalStack Health Check Output](Evidence/image8.png)
 
+<img width="624" height="228" alt="image" src="https://github.com/user-attachments/assets/10d6e311-2a2c-4692-8ae8-9948ab1ea101" />
+
+
+
+
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
   ```bash
@@ -329,6 +360,11 @@ aws $EP sts get-caller-identity
 
 ### Screenshot 9: AWS CLI Configuration & STS Identity Verification
 ![AWS CLI Configuration & STS Identity Verification](Evidence/image9.png)
+
+<img width="624" height="296" alt="image" src="https://github.com/user-attachments/assets/943406c0-6c59-49f3-a1f5-2b345e306b87" />
+
+
+
 
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
 * **Command Executed:**
