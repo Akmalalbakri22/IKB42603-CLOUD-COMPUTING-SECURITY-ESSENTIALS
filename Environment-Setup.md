@@ -191,7 +191,8 @@ aws $EP sts get-caller-identity
 
 ### Screenshot 1: Docker User Permission & Version Check
 ![Docker User Permission & Version Check](Evidence/image1.png)
-<img width="613" height="183" alt="image" src="https://github.com/user-attachments/assets/60439a79-bcf8-442d-bfd5-82fa0c3459ac" />
+ <img width="613" height="183" alt="image" src="https://github.com/user-attachments/assets/60439a79-bcf8-442d-bfd5-82fa0c3459ac" />
+  
 
 
 * **Terminal Prompt:** `(anonym22㉿kali)-[~]`
