@@ -51,7 +51,8 @@ Docker version 20.10.25+dfsg4, build 9c06dea35e9a963f281434761c656fba4ac43aed
 {"services": {"acm": "available", "apigateway": "available", "cloudformation": "available", "cloudwatch": "available", "config": "available", "dynamodb": "available", "dynamodbstreams": "available", "ec2": "available", "es": "available", "events": "available", "firehose": "available", "iam": "running", "kinesis": "available", "kms": "available", "lambda": "available", "logs": "available", "opensearch": "available", "redshift": "available", "resource-groups": "available", "resourcegroupstaggingapi": "available", "route53": "available", "route53resolver": "available", "s3": "available", "s3control": "available", "scheduler": "available", "secretsmanager": "available", "ses": "available", "sns": "available", "sqs": "available", "ssm": "available", "stepfunctions": "available", "sts": "running", "support": "available", "swf": "available", "transcribe": "available"}, "edition": "community", "version": "3.8.1"}
 ```
 
-![Docker Version & LocalStack Health Status](Evidence/image1.png)
+<img width="624" height="376" alt="image" src="https://github.com/user-attachments/assets/8d40440c-27f5-454d-89ca-a48de76b946b" />
+
 
 ---
 
@@ -77,7 +78,8 @@ aws --endpoint-url=http://localhost:4566 sts get-caller-identity
 }
 ```
 
-![STS Get Caller Identity Output](Evidence/image2.png)
+<img width="624" height="263" alt="image" src="https://github.com/user-attachments/assets/2fbb2914-b3bc-408f-b52f-43d3615ebf76" />
+
 
 > [!NOTE]
 > **Operating Identity:** The response confirms that requests initially originate from the default root identity (`arn:aws:iam::000000000000:root`). The subsequent tasks establish non-root identities to enforce security best practices.
@@ -145,7 +147,8 @@ aws $EP iam get-group --group-name Admins
 }
 ```
 
-![Create Admins Group & CloudAdmin User](Evidence/image3.png)
+<img width="624" height="464" alt="image" src="https://github.com/user-attachments/assets/2fcdb33f-0a47-4112-b65a-b2263dfb8728" />
+
 
 **CLI Output (Verification):**
 ```json
@@ -169,7 +172,8 @@ aws $EP iam get-group --group-name Admins
 }
 ```
 
-![Verify Group Membership Output](Evidence/image4.png)
+<img width="607" height="392" alt="image" src="https://github.com/user-attachments/assets/fca699d2-a1f5-4e78-9d34-d51b7ac68391" />
+
 
 > [!TIP]
 > **Security Best Practice:** Attaching policies to groups rather than individual users ensures manageable, scalable, and auditable access control. Modifying group policy automatically updates permissions for all current and future member users.
@@ -204,7 +208,8 @@ aws $EP iam list-attached-user-policies --user-name Analyst_Albakri
 }
 ```
 
-![Analyst User Policy Attachment](Evidence/image5.png)
+<img width="624" height="409" alt="image" src="https://github.com/user-attachments/assets/aa40bacb-2e44-4d57-a16d-d42c617650ad" />
+
 
 ### Blast-Radius Reduction Analysis
 If the `Analyst_Albakri` credentials were compromised by an attacker:
@@ -227,7 +232,7 @@ aws $EP iam list-access-keys --user-name Analyst_Albakri
 
 # 4.3 Rotate / Deactivate the access key
 aws $EP iam update-access-key --user-name Analyst_Albakri \
-  --access-key-id LKIAQAAAAAAAFWZJEI4B --status Inactive
+  --access-key-id *ACCESS_KEY_ID* --status Inactive
 ```
 
 **CLI Output (Key Creation & Listing):**
@@ -235,29 +240,18 @@ aws $EP iam update-access-key --user-name Analyst_Albakri \
 {
     "AccessKey": {
         "UserName": "Analyst_Albakri",
-        "AccessKeyId": "LKIAQAAAAAAAFWZJEI4B",
+        "AccessKeyId": "ACCESS_KEY_ID",
         "Status": "Active",
-        "SecretAccessKey": "ZhzXo2ria4DEZ5I+KxSO0bZweFLfQi4yeHf6ZUux",
+        "SecretAccessKey": "SECRET_ACCESS_KEY",
         "CreateDate": "2026-08-04T08:17:25+00:00"
     }
 }
 ```
-```json
-{
-    "AccessKeyMetadata": [
-        {
-            "UserName": "Analyst_Albakri",
-            "AccessKeyId": "LKIAQAAAAAAAFWZJEI4B",
-            "Status": "Active",
-            "CreateDate": "2026-08-04T08:17:25+00:00"
-        }
-    ]
-}
-```
 
-![Access Key Creation and Listing](Evidence/image6.png)
+<img width="671" height="434" alt="image" src="https://github.com/user-attachments/assets/1a9d942a-02ee-42c8-84a9-b29f4cce4be0" />
 
-![Access Key Deactivation](Evidence/image7.png)
+<img width="628" height="77" alt="image" src="https://github.com/user-attachments/assets/899649df-f83e-4740-be26-c48a9507a172" />
+
 
 > [!WARNING]
 > **Long-Lived Key Risk & Hygiene:** Access keys are persistent secrets. If committed to source code repositories or exposed, attackers can abuse them indefinitely until revoked. In production AWS environments, long-lived access keys must be regularly rotated, and short-lived IAM roles with temporary STS tokens should be preferred. Access keys should **never** be generated for the root account.
@@ -304,7 +298,8 @@ NAME                      STATUS   ROLES           AGE   VERSION
 ccse-lab1-control-plane   Ready    control-plane   64s   v1.30.0
 ```
 
-![Kubernetes Cluster Setup via Kind](Evidence/image8.png)
+<img width="624" height="389" alt="image" src="https://github.com/user-attachments/assets/7b35917a-bcbc-4902-b423-3c85b33659ca" />
+
 
 ---
 
@@ -333,7 +328,8 @@ local-path-storage   Active   17m
 prod                 Active   30s
 ```
 
-![Namespace Creation](Evidence/image9.png)
+<img width="624" height="317" alt="image" src="https://github.com/user-attachments/assets/45b5fc38-716e-4f81-a222-99e638481c16" />
+
 
 ---
 
@@ -347,7 +343,8 @@ kubectl create serviceaccount dev-user -n dev
 ```
 **CLI Output:** `serviceaccount/dev-user created`
 
-![Create ServiceAccount](Evidence/image10.png)
+<img width="622" height="63" alt="image" src="https://github.com/user-attachments/assets/f8ef8f34-06e4-454e-8dbf-39ae74c09d07" />
+
 
 ---
 
@@ -360,7 +357,8 @@ kubectl create role pod-reader -n dev \
 ```
 **CLI Output:** `role.rbac.authorization.k8s.io/pod-reader created`
 
-![Create Role](Evidence/image11.png)
+<img width="624" height="71" alt="image" src="https://github.com/user-attachments/assets/9f16a1d3-7e8f-4eab-9587-efd828a69e63" />
+
 
 ---
 
@@ -373,7 +371,8 @@ kubectl create rolebinding dev-user-binding -n dev \
 ```
 **CLI Output:** `rolebinding.rbac.authorization.k8s.io/dev-user-binding created`
 
-![Create RoleBinding](Evidence/image12.png)
+<img width="624" height="67" alt="image" src="https://github.com/user-attachments/assets/e5d1ac63-b441-40fb-b091-ee1a66398cd3" />
+
 
 ---
 
@@ -401,7 +400,8 @@ no
 no
 ```
 
-![Access Control Verification](Evidence/image13.png)
+<img width="722" height="248" alt="image" src="https://github.com/user-attachments/assets/cb7a5c33-f7bc-4490-a844-f2ae76a8cca0" />
+
 
 ---
 
