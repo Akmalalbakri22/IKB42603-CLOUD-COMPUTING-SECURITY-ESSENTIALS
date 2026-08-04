@@ -123,56 +123,11 @@ aws $EP iam add-user-to-group --group-name Admins \
 aws $EP iam get-group --group-name Admins
 ```
 
-**CLI Output (Group & User Creation):**
-```json
-{
-    "Group": {
-        "Path": "/",
-        "GroupName": "Admins",
-        "GroupId": "b9pj8uol5ve0ynt5ubgs",
-        "Arn": "arn:aws:iam::000000000000:group/Admins",
-        "CreateDate": "2026-08-04T08:10:22.131000+00:00"
-    }
-}
-```
-```json
-{
-    "User": {
-        "Path": "/",
-        "UserName": "CloudAdmin_Akmal",
-        "UserId": "otkln4q0a8lza46mg6b",
-        "Arn": "arn:aws:iam::000000000000:user/CloudAdmin_Akmal",
-        "CreateDate": "2026-08-04T08:12:34.135000+00:00"
-    }
-}
-```
-
-<img width="624" height="464" alt="image" src="https://github.com/user-attachments/assets/2fcdb33f-0a47-4112-b65a-b2263dfb8728" />
+<img width="684" height="510" alt="image" src="https://github.com/user-attachments/assets/175889e7-76a8-4f76-8bcc-11af84593de9" />
 
 
-**CLI Output (Verification):**
-```json
-{
-    "Users": [
-        {
-            "Path": "/",
-            "UserName": "CloudAdmin_Akmal",
-            "UserId": "otkl7n4q0a8lza46mg65",
-            "Arn": "arn:aws:iam::000000000000:user/CloudAdmin_Akmal",
-            "CreateDate": "2026-08-04T08:12:34.136000+00:00"
-        }
-    ],
-    "Group": {
-        "Path": "/",
-        "GroupName": "Admins",
-        "GroupId": "b9pj8uol5ve0ynt5ubgs",
-        "Arn": "arn:aws:iam::000000000000:group/Admins",
-        "CreateDate": "2026-08-04T08:10:22.131000+00:00"
-    }
-}
-```
+<img width="663" height="430" alt="image" src="https://github.com/user-attachments/assets/92d81f8e-79f2-453b-94d2-3803b4a6b380" />
 
-<img width="607" height="392" alt="image" src="https://github.com/user-attachments/assets/fca699d2-a1f5-4e78-9d34-d51b7ac68391" />
 
 
 > [!TIP]
@@ -208,7 +163,7 @@ aws $EP iam list-attached-user-policies --user-name Analyst_Albakri
 }
 ```
 
-<img width="624" height="409" alt="image" src="https://github.com/user-attachments/assets/aa40bacb-2e44-4d57-a16d-d42c617650ad" />
+<img width="684" height="447" alt="image" src="https://github.com/user-attachments/assets/ca001de5-1a2a-439b-b480-db7c9c8ff9cc" />
 
 
 ### Blast-Radius Reduction Analysis
@@ -497,6 +452,9 @@ subjects:
   name: dev-user
   namespace: dev
 ```
+
+<img width="720" height="301" alt="image" src="https://github.com/user-attachments/assets/ef8691bf-3ad8-4736-ae3f-e7ac5b81a0a1" />
+
 
 ---
 
