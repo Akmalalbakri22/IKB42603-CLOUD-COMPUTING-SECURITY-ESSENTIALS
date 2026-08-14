@@ -1,9 +1,19 @@
 # Lab 2 Report: Secure Isolation & Multi-Tenancy in Kubernetes & Docker
 
-**Course:** IKB42603 Cloud Computing Security Essentials  
+**Course:** IKB42603 Cloud Computing Security Essentials 
+
 **Institution:** Universiti Kuala Lumpur Malaysian Institute of Information Technology (UniKL MIIT)  
-**Lab Instructor:** Prof. Dr. Shahrulniza Musa  
+
+**Lab Instructor:** Miss Nor Adani Kamal Mohamad Nasir  
+
+**Name:** Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
+
+**Student ID:** 52215124003
+
+**Group:** L02-B04
+
 **Session Scope:** Week 3 (Session A: Compute Isolation) & Week 4 (Session B: Network & Storage Isolation)  
+
 **Environment:** Linux / Kali Linux (`anonym22@kali`), Docker Desktop/Engine, `kind` (Kubernetes in Docker v1.30.0), `kubectl`, Project Calico CNI (v3.27.0)
 
 ---
@@ -761,7 +771,7 @@ kubectl get globalnetworkpolicies
 kubectl describe globalnetworkpolicy tenant-isolation
 ```
 
-<img width="624" height="288" alt="image" src="https://github.com/user-attachments/assets/ee1d83a7-9574-436c-9f6e-2b0458b849d2" />
+<img width="776" height="357" alt="image" src="https://github.com/user-attachments/assets/20cbd8ce-a030-4bee-afd4-14e13642d1da" />
 
 
 
