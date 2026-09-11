@@ -1086,8 +1086,8 @@ PendingWindowInDays: 7
 
 ### Evidence
 
-![Evidence Image 31 --- KMS key scheduled for
-deletion](lab6_evidence_images/image31.png)
+<img width="777" height="305" alt="image" src="https://github.com/user-attachments/assets/5522453c-3434-41d4-a0ba-c292b81fbeed" />
+
 
 ## Step 6 --- Attempt to read encrypted data
 
@@ -1103,7 +1103,7 @@ returned after the key was disabled.
 
 ### Evidence
 
-<img width="777" height="305" alt="image" src="https://github.com/user-attachments/assets/1bfc7966-be1a-4cb6-9dfc-3fc181949f4c" />
+<img width="771" height="387" alt="image" src="https://github.com/user-attachments/assets/edbe2cac-5e2c-486f-9cd8-9e09254d4c90" />
 
 
 ## Result
