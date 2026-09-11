@@ -4,12 +4,17 @@
 
 **Student Name:**
 Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
+
 **Student ID:**
 52215124003
+
 **Course:** IKB42603 Cloud Computing Security Essentials\
+
 **Lab:** Lab 6 --- Object Storage Security & the Data Security
 Lifecycle\
+
 **Platform:** Amazon S3 on LocalStack\
+
 **Date:** 11 September 2026
 
 ------------------------------------------------------------------------
