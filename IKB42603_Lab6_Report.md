@@ -13,7 +13,7 @@ Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
 **Lab:** Lab 6 --- Object Storage Security & the Data Security
 Lifecycle\
 
-**Platform:** Amazon S3 on LocalStack\
+**Platform:** Amazon S3 on LocalStack
 
 **Date:** 11 September 2026
 
