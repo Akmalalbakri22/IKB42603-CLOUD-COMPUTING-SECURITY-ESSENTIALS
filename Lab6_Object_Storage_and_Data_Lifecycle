@@ -1,220 +1,140 @@
-# IKB42603 Cloud Computing Security Essentials
+report = r"""# IKB42603 Cloud Computing Security Essentials
 
-# Lab 6 Report --- Object Storage Security & the Data Security Lifecycle
+# Lab 6 Report - Object Storage Security & the Data Security Lifecycle
 
-**Student Name:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
-**Student ID:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+**Student Name:** Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
+**Student ID:** 52215124003
 **Course:** IKB42603 Cloud Computing Security Essentials\
-**Lab:** Lab 6 --- Object Storage Security & the Data Security
-Lifecycle\
+**Lab:** Lab 6 - Object Storage Security & the Data Security Lifecycle\
 **Platform:** Amazon S3 on LocalStack\
 **Date:** 11 September 2026
 
-------------------------------------------------------------------------
+---
 
 ## 1. Introduction
 
-This lab demonstrates how to secure object storage throughout the data
-security lifecycle. The activities cover data classification,
-public-bucket exposure, Block Public Access, IAM and bucket policies,
-SSE-KMS encryption, presigned URLs, versioning, data remanence,
-lifecycle rules, and cryptographic erasure.
+This lab demonstrates how to secure object storage throughout the **data security lifecycle**. The activities cover data classification, public-bucket exposure, Block Public Access, IAM and bucket policies, SSE-KMS encryption, presigned URLs, versioning, data remanence, lifecycle rules, and cryptographic erasure.
 
 The lab is divided into two parts:
 
--   **Session A:** Tasks 1--4 focus on who can access the data.
--   **Session B:** Tasks 5--8 focus on how the data is protected,
-    retained, versioned, and eventually destroyed.
+- **Session A (Tasks 1-4):** Focuses on *who can access* the data - access control and exposure.
+- **Session B (Tasks 5-8):** Focuses on *how the data is protected*, retained, versioned, and eventually destroyed.
 
-The steps and evidence in this report follow the IKB42603 Lab 6 manual.
-The supplied `Lab6 Cloud Evidence.md` file contains **32 screenshots**,
-and all 32 are included below.
+All 32 screenshots from `Lab6 Cloud Evidence.md` are embedded below as evidence.
 
-------------------------------------------------------------------------
+---
 
-# 2. Environment Setup
+# 2. Environment Setup - Start LocalStack
 
-## Step 1 --- Start LocalStack
+Before running any task, LocalStack was started with IAM enforcement enabled and the AWS CLI was configured to point at it.
 
-The LocalStack container was started with IAM enforcement enabled.
+**Commands run:**
 
-``` bash
+```bash
 docker rm -f localstack 2>/dev/null
-
 docker run -d --name localstack -p 4566:4566 \
   -e LOCALSTACK_AUTH_TOKEN=$LOCALSTACK_AUTH_TOKEN \
   -e ENFORCE_IAM=1 \
   localstack/localstack-pro:latest
-```
-
-The AWS CLI endpoint and test credentials were then configured:
-
-``` bash
 export EP='--endpoint-url=http://localhost:4566'
-
 aws configure set aws_access_key_id test
 aws configure set aws_secret_access_key test
 aws configure set region us-east-1
-
 aws $EP sts get-caller-identity
 ```
 
-### Result
-
-The identity check returned the LocalStack dummy AWS account
-`000000000000`.
+> **Note:** `ENFORCE_IAM=1` makes LocalStack actually evaluate IAM policies. Without it, LocalStack allows everything. This flag is required for Task 4 to work correctly.
 
 ### Evidence
 
-![Evidence Image 1 --- LocalStack setup and caller
-identity](lab6_evidence_images/image1.png)
+![Evidence Image 1 - LocalStack setup and caller identity](lab6_evidence_images/image1.png)
 
-------------------------------------------------------------------------
+**What the screenshot shows:** `docker run` started LocalStack. `sts get-caller-identity` returned `UserId: 000000000000`, `Account: 000000000000`, `Arn: arn:aws:iam::000000000000:root` - confirming the CLI is correctly pointed at LocalStack.
 
-# 3. Task 1 --- Classify the Data Before You Store It
+---
+
+# 3. Task 1 - Classify the Data Before You Store It
 
 ## Objective
 
-The purpose of this task is to classify information before deciding how
-it should be protected. Three objects were created:
+Classify data **before** deciding how to protect it. Three objects representing different sensitivity levels were created and tagged accordingly.
 
--   Public information
--   Internal information
--   Confidential patient information
+## Step 1 - Create the bucket
 
-## Step 1 --- Create the bucket
-
-``` bash
+```bash
 export BUCKET=miit-patient-records-$RANDOM
 echo $BUCKET
-
 aws $EP s3api create-bucket --bucket $BUCKET
 ```
 
-The bucket used in the evidence was:
+Bucket created: `miit-patient-records-18273`
 
-``` text
-miit-patient-records-18273
-```
+### Evidence
 
-## Step 2 --- Create the three files
+![Evidence Image 2 - Bucket creation and file preparation](lab6_evidence_images/image2.png)
 
-``` bash
-echo 'Ward visiting hours 10am-8pm' > public-notice.txt
-echo 'Staff duty schedule, week 12' > internal-roster.txt
-echo 'Patient: Ahmad bin Ali, Diagnosis: confidential' > confidential-record.txt
-```
+**What the screenshot shows:** `$BUCKET` was set to `miit-patient-records-18273`. `create-bucket` returned the Location and ARN. Three content files were created: `public-notice.txt` (Ward visiting hours 10am-8pm), `internal-roster.txt` (Staff duty schedule, week 12), and `confidential-record.txt` (Patient: Ahmad bin Ali, Diagnosis: confidential).
 
-## Step 3 --- Upload and tag the objects
+## Step 2 - Upload and tag the three objects
 
-``` bash
-aws $EP s3api put-object --bucket $BUCKET \
-  --key public/notice.txt \
-  --body public-notice.txt \
-  --tagging 'classification=public'
-
-aws $EP s3api put-object --bucket $BUCKET \
-  --key internal/roster.txt \
-  --body internal-roster.txt \
-  --tagging 'classification=internal'
-
-aws $EP s3api put-object --bucket $BUCKET \
-  --key confidential/record.txt \
-  --body confidential-record.txt \
-  --tagging 'classification=confidential'
+```bash
+aws $EP s3api put-object --bucket $BUCKET --key public/notice.txt \
+  --body public-notice.txt --tagging 'classification=public'
+aws $EP s3api put-object --bucket $BUCKET --key internal/roster.txt \
+  --body internal-roster.txt --tagging 'classification=internal'
+aws $EP s3api put-object --bucket $BUCKET --key confidential/record.txt \
+  --body confidential-record.txt --tagging 'classification=confidential'
 ```
 
 ### Evidence
 
-![Evidence Image 2 --- Bucket creation and file
-preparation](lab6_evidence_images/image2.png)
+![Evidence Image 3 - Public and internal objects uploaded with classification tags](lab6_evidence_images/image3.png)
 
-![Evidence Image 3 --- Public and internal objects uploaded with
-classification tags](lab6_evidence_images/image3.png)
+**What the screenshot shows:** `put-object` for `public/notice.txt` (tagged `classification=public`) and `internal/roster.txt` (tagged `classification=internal`) returned ETag and checksum confirming successful upload.
 
-![Evidence Image 4 --- Confidential object uploaded with confidential
-classification](lab6_evidence_images/image4.png)
+![Evidence Image 4 - Confidential object uploaded with confidential tag](lab6_evidence_images/image4.png)
 
-## Step 4 --- List the objects
+**What the screenshot shows:** `put-object` for `confidential/record.txt` (tagged `classification=confidential`) returned ETag confirming the most sensitive file was stored.
 
-``` bash
+## Step 3 - List objects and verify tag
+
+```bash
 aws $EP s3api list-objects-v2 --bucket $BUCKET \
   --query 'Contents[].[Key,Size]' --output table
-```
-
-The output showed the three objects:
-
--   `confidential/record.txt`
--   `internal/roster.txt`
--   `public/notice.txt`
-
-## Step 5 --- Check the confidential tag
-
-``` bash
-aws $EP s3api get-object-tagging \
-  --bucket $BUCKET \
-  --key confidential/record.txt
-```
-
-The output showed:
-
-``` text
-Key: classification
-Value: confidential
+aws $EP s3api get-object-tagging --bucket $BUCKET --key confidential/record.txt
 ```
 
 ### Evidence
 
-![Evidence Image 5 --- Object listing and confidential classification
-tag](lab6_evidence_images/image5.png)
+![Evidence Image 5 - Object listing and confidential classification tag](lab6_evidence_images/image5.png)
+
+**What the screenshot shows:** `list-objects-v2` table showed all three objects - `confidential/record.txt` (48 bytes), `internal/roster.txt` (29 bytes), `public/notice.txt` (29 bytes). `get-object-tagging` returned `Key: classification`, `Value: confidential`.
 
 ## Data Classification Table
 
-  -----------------------------------------------------------------------
-  Classification    Who may read it   Impact if leaked  Control to apply
-  ----------------- ----------------- ----------------- -----------------
-  Public            Anyone            Low               Public
-                                                        classification
-                                                        only; no
-                                                        confidential data
-
-  Internal          Authorised        Moderate          IAM and
-                    staff/users                         least-privilege
-                                                        access to the
-                                                        internal prefix
-
-  Confidential      Only specifically High; may expose  Block Public
-                    authorised users  sensitive patient Access,
-                                      information       least-privilege
-                                                        policy, SSE-KMS,
-                                                        versioning and
-                                                        lifecycle
-                                                        controls
-  -----------------------------------------------------------------------
+| Classification | Who may read it | Impact if leaked | Control applied |
+|---|---|---|---|
+| **public** | Anyone | Low | Classification tag only; no sensitive data stored here |
+| **internal** | Authorised staff/users | Moderate | IAM least-privilege policy scoped to `internal/` prefix |
+| **confidential** | Only specifically authorised users | High - patient data | Block Public Access + explicit Deny + SSE-KMS + versioning + lifecycle |
 
 ### Simple explanation
 
-Classification tells us **how sensitive the data is**. More sensitive
-data needs stronger access restrictions and protection.
+> Classification tells us **how sensitive the data is**. More sensitive data needs stronger access restrictions and protection.
+>
+> Important: a prefix like `confidential/` is **not a real folder** in S3. Object storage has a flat namespace - the slash is just part of the object key. A policy that uses `*` instead of a specific prefix exposes everything at once.
 
-A prefix such as `confidential/` is also not a real folder. It is part
-of the object key. Policies can therefore use the prefix to restrict
-access to only certain objects.
+---
 
-------------------------------------------------------------------------
-
-# 4. Task 2 --- Reproduce the Archetypal Breach
+# 4. Task 2 - Reproduce the Archetypal Breach
 
 ## Objective
 
-This task demonstrates how a bucket can accidentally become publicly
-readable.
+Deliberately create the most common real-world cloud storage mistake - a bucket policy with `Principal: "*"`. The goal is to understand exactly how it works so we can prevent it.
 
-## Step 1 --- Create the dangerous bucket policy
+## Step 1 - Create the public bucket policy
 
-``` bash
+```bash
 cat > public-policy.json <<JSON
 {
   "Version": "2012-10-17",
@@ -229,1198 +149,734 @@ cat > public-policy.json <<JSON
 JSON
 ```
 
-## Step 2 --- Apply the policy
+### Evidence
 
-``` bash
-aws $EP s3api put-bucket-policy \
-  --bucket $BUCKET \
-  --policy file://public-policy.json
-```
+![Evidence Image 6 - Public bucket policy JSON created](lab6_evidence_images/image6.png)
 
-## Step 3 --- Verify the policy
+**What the screenshot shows:** The `cat > public-policy.json <<JSON` command wrote the dangerous policy. The policy allows `s3:GetObject` for `Principal: "*"` on all objects (`$BUCKET/*`).
 
-``` bash
-aws $EP s3api get-bucket-policy \
-  --bucket $BUCKET \
-  --query Policy \
-  --output text
+## Step 2 - Apply and verify the policy
+
+```bash
+aws $EP s3api put-bucket-policy --bucket $BUCKET --policy file://public-policy.json
+aws $EP s3api get-bucket-policy --bucket $BUCKET --query Policy --output text
 ```
 
 ### Evidence
 
-![Evidence Image 6 --- Creation of the public bucket
-policy](lab6_evidence_images/image6.png)
+![Evidence Image 7 - Public bucket policy applied and confirmed](lab6_evidence_images/image7.png)
 
-![Evidence Image 7 --- Public bucket policy applied and
-displayed](lab6_evidence_images/image7.png)
+**What the screenshot shows:** `get-bucket-policy` confirmed `Principal: "*"`, `Effect: Allow`, `Action: s3:GetObject`, `Resource: arn:aws:s3:::miit-patient-records-18273/*`.
 
-## Step 4 --- Test anonymous access
+## Step 3 - Test anonymous access (the breach)
 
-No AWS credentials were used for this request.
-
-``` bash
+```bash
 curl -s -o leaked.txt -w 'HTTP %{http_code}\n' \
   http://localhost:4566/$BUCKET/confidential/record.txt
-
 cat leaked.txt
 ```
 
-The evidence showed:
-
-``` text
-HTTP 200
-Patient: Ahmad bin Ali, Diagnosis: confidential
-```
-
 ### Evidence
 
-![Evidence Image 8 --- Anonymous request successfully accessed the
-confidential record](lab6_evidence_images/image8.png)
+![Evidence Image 8 - Anonymous request exposed the confidential record](lab6_evidence_images/image8.png)
+
+**What the screenshot shows:** `curl` returned `HTTP 200`. `cat leaked.txt` printed: **"Patient: Ahmad bin Ali, Diagnosis: confidential"** - no AWS credentials were used at all.
 
 ## Result
 
-The confidential record was exposed because the bucket policy allowed:
-
-``` json
-"Principal": "*"
-```
+The confidential record was fully exposed. There was **no exploit, no malware, no vulnerability** - the only cause was `"Principal": "*"`.
 
 ### Simple explanation
 
-`Principal: "*"` means **everyone** can be the principal. Because the
-action was `s3:GetObject` and the resource covered `$BUCKET/*`, any
-anonymous user could read the objects.
+> `Principal: "*"` means **any entity in the world** - including anonymous internet users with no AWS account - can act as the principal. Combined with `s3:GetObject` on `$BUCKET/*`, anyone who knows the URL can read every object in the bucket.
 
-There was no need for malware or an exploit. The problem was simply an
-overly broad bucket policy.
+---
 
-------------------------------------------------------------------------
-
-# 5. Task 3 --- Remediate with Block Public Access
+# 5. Task 3 - Remediate with Block Public Access
 
 ## Objective
 
-Block Public Access is used as a preventative guardrail to stop public
-access from being accidentally enabled.
+Block Public Access is a **preventative guardrail** - it stops a public policy from being accepted in the first place, protecting against future mistakes by any team member.
 
-## Step 1 --- Remove the dangerous policy
+## Steps
 
-``` bash
+```bash
+# 1. Remove the dangerous policy
 aws $EP s3api delete-bucket-policy --bucket $BUCKET
-```
-
-## Step 2 --- Enable all four Block Public Access settings
-
-``` bash
-aws $EP s3api put-public-access-block \
-  --bucket $BUCKET \
+# 2. Enable all four Block Public Access settings
+aws $EP s3api put-public-access-block --bucket $BUCKET \
   --public-access-block-configuration \
   BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
-```
-
-## Step 3 --- Verify the settings
-
-``` bash
+# 3. Verify the settings
 aws $EP s3api get-public-access-block --bucket $BUCKET
-```
-
-The evidence showed all four flags as `true`:
-
--   `BlockPublicAcls = true`
--   `IgnorePublicAcls = true`
--   `BlockPublicPolicy = true`
--   `RestrictPublicBuckets = true`
-
-## Step 4 --- Test the public policy again
-
-The supplied evidence shows that LocalStack stored the Block Public
-Access configuration but still allowed the test public policy/read in
-this environment.
-
-``` bash
-aws $EP s3api put-bucket-policy \
-  --bucket $BUCKET \
-  --policy file://public-policy.json
-
+# 4. Try to re-apply the public policy (guardrail should reject it on real AWS)
+aws $EP s3api put-bucket-policy --bucket $BUCKET --policy file://public-policy.json
+# 5. Re-test anonymous access
 curl -s -o /dev/null -w 'anonymous read now: HTTP %{http_code}\n' \
   http://localhost:4566/$BUCKET/confidential/record.txt
 ```
 
 ### Evidence
 
-![Evidence Image 9 --- Block Public Access configuration and
-anonymous-read retest](lab6_evidence_images/image9.png)
+![Evidence Image 9 - Block Public Access all four flags enabled](lab6_evidence_images/image9.png)
 
-## Result
-
-The important evidence is that all four Block Public Access flags were
-configured as `true`.
-
-On real Amazon S3, `BlockPublicPolicy` is the key setting that prevents
-a public bucket policy such as `Principal: "*"` from being accepted.
+**What the screenshot shows:** `get-public-access-block` confirmed all four settings are `true`: `BlockPublicAcls`, `IgnorePublicAcls`, `BlockPublicPolicy`, `RestrictPublicBuckets`. The anonymous `curl` re-test returned `HTTP 200` - LocalStack stores the config but does not always enforce it. On **real AWS**, `BlockPublicPolicy: true` would have rejected the `put-bucket-policy` call itself.
 
 ### Simple explanation
 
-A **guardrail** prevents an unsafe configuration from being created. A
-**detective control** only finds or reports the problem after it
-happens.
+> **Guardrail vs Detective Control:**
+> - A **detective control** detects a problem *after* it happens (e.g., AWS Config alerts when a bucket becomes public).
+> - A **guardrail (preventative control)** stops the unsafe configuration from being created *in the first place*.
+>
+> For an organisation with many engineers, a guardrail is stronger - it prevents any single careless or mistaken action from exposing data, regardless of who makes it.
 
-For an organisation with many engineers, a preventative guardrail is
-stronger because it reduces the chance that one engineer accidentally
-makes a bucket public.
+## Least-privilege policy
 
-## Step 5 --- Create a least-privilege policy
+After the guardrail was applied, a least-privilege policy was created to grant access only to the `internal/` prefix:
 
-The intended policy gives account-level access only to the `internal/`
-prefix:
-
-``` json
+```json
 {
-  "Version": "2012-10-17",
   "Statement": [{
-    "Sid": "AccountReadInternalOnly",
     "Effect": "Allow",
-    "Principal": {
-      "AWS": "arn:aws:iam::000000000000:root"
-    },
+    "Principal": {"AWS": "arn:aws:iam::000000000000:root"},
     "Action": "s3:GetObject",
     "Resource": "arn:aws:s3:::$BUCKET/internal/*"
   }]
 }
 ```
 
-### Simple explanation
+> Scoping to `internal/*` instead of `$BUCKET/*` means the confidential prefix is never automatically exposed.
 
-Least privilege means giving access only to what is needed. The policy
-is scoped to `internal/*` instead of `$BUCKET/*`, so it does not
-automatically expose confidential objects.
+---
 
-------------------------------------------------------------------------
-
-# 6. Task 4 --- Identity Policy vs Resource Policy
+# 6. Task 4 - Identity Policy vs Resource Policy
 
 ## Objective
 
-This task shows that S3 access can be affected by both:
+S3 access is governed by two policies simultaneously: the identity-based IAM policy on the user, and the resource-based bucket policy on the bucket. When they conflict, an explicit `Deny` always wins.
 
-1.  An identity-based IAM policy attached to a user.
-2.  A resource-based bucket policy attached to the bucket.
+## Step 1 - Create DataAnalyst user with broad IAM policy
 
-An explicit `Deny` overrides an `Allow`.
-
-## Step 1 --- Create the DataAnalyst user
-
-``` bash
+```bash
 aws $EP iam create-user --user-name DataAnalyst
+# analyst-iam.json: Allow s3:GetObject and s3:ListBucket on Resource: "*"
+aws $EP iam put-user-policy --user-name DataAnalyst \
+  --policy-name S3ReadAll --policy-document file://analyst-iam.json
+aws $EP iam create-access-key --user-name DataAnalyst \
+  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' --output text
 ```
 
-## Step 2 --- Give the analyst a broad IAM policy
+### Evidence
 
-``` json
+![Evidence Image 10 - DataAnalyst IAM policy applied and access key created](lab6_evidence_images/image10.png)
+
+**What the screenshot shows:** The `analyst-iam.json` policy (Allow `s3:GetObject`, `s3:ListBucket` on `Resource: "*"`) was applied. `create-access-key` generated credentials for the DataAnalyst user.
+
+![Evidence Image 11 - Analyst secret key configured](lab6_evidence_images/image11.png)
+
+**What the screenshot shows:** `ANALYST_SECRET` variable was set with the secret access key (redacted for security).
+
+## Step 2 - Bucket policy: Allow internal, Deny confidential
+
+```json
 {
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": ["s3:GetObject", "s3:ListBucket"],
-    "Resource": "*"
-  }]
-}
-```
-
-This policy allows the analyst to read objects broadly.
-
-## Step 3 --- Create access credentials
-
-``` bash
-aws $EP iam put-user-policy \
-  --user-name DataAnalyst \
-  --policy-name S3ReadAll \
-  --policy-document file://analyst-iam.json
-
-aws $EP iam create-access-key \
-  --user-name DataAnalyst \
-  --query 'AccessKey.[AccessKeyId,SecretAccessKey]' \
-  --output text
-```
-
-The access-key values were then configured under the `analyst` AWS CLI
-profile.
-
-### Evidence
-
-![Evidence Image 10 --- DataAnalyst IAM policy and access-key
-creation](lab6_evidence_images/image10.png)
-
-![Evidence Image 11 --- Analyst secret/access-key value
-configuration](lab6_evidence_images/image11.png)
-
-## Step 4 --- Create a bucket policy that allows internal but denies confidential
-
-The important statements were:
-
-``` json
-{
-  "Sid": "AllowAnalystInternal",
-  "Effect": "Allow",
-  "Principal": {
-    "AWS": "arn:aws:iam::000000000000:user/DataAnalyst"
-  },
-  "Action": "s3:GetObject",
-  "Resource": "arn:aws:s3:::$BUCKET/internal/*"
-},
-{
-  "Sid": "DenyAnalystConfidential",
-  "Effect": "Deny",
-  "Principal": {
-    "AWS": "arn:aws:iam::000000000000:user/DataAnalyst"
-  },
-  "Action": "s3:*",
-  "Resource": "arn:aws:s3:::$BUCKET/confidential/*"
-}
-```
-
-### Evidence
-
-![Evidence Image 12 --- Bucket policy with internal Allow and
-confidential Deny](lab6_evidence_images/image12.png)
-
-## Step 5 --- Test internal access
-
-``` bash
-AWS_PROFILE=analyst aws $EP s3api get-object \
-  --bucket $BUCKET \
-  --key internal/roster.txt \
-  analyst-internal.txt && echo "internal: ALLOWED"
-```
-
-The evidence showed:
-
-``` text
-internal: ALLOWED
-```
-
-### Evidence
-
-![Evidence Image 13 --- Analyst successfully accessed the internal
-object](lab6_evidence_images/image13.png)
-
-## Step 6 --- Check the analyst IAM policy
-
-``` bash
-AWS_PROFILE=analyst aws $EP iam get-user-policy \
-  --user-name DataAnalyst \
-  --policy-name S3ReadALL
-```
-
-The evidence confirms that the analyst's IAM policy allowed broad S3
-read access.
-
-### Evidence
-
-![Evidence Image 14 --- Analyst IAM policy showing broad
-permissions](lab6_evidence_images/image14.png)
-
-## Step 7 --- Test confidential access
-
-``` bash
-AWS_PROFILE=analyst aws $EP s3api get-object \
-  --bucket $BUCKET \
-  --key confidential/record.txt \
-  analyst-conf.txt
-```
-
-The supplied evidence shows the confidential object request and its
-object metadata.
-
-### Evidence
-
-![Evidence Image 15 --- Analyst confidential-object
-request](lab6_evidence_images/image15.png)
-
-## Result and policy evaluation
-
-The intended evaluation is:
-
-``` text
-Default deny
-    ↓
-Check explicit Deny
-    ↓
-Check explicit Allow
-```
-
-For the **internal object**:
-
--   IAM policy allows access.
--   Bucket policy also allows access to `internal/*`.
--   Result: **ALLOWED**
-
-For the **confidential object**:
-
--   IAM policy allows access.
--   Bucket policy explicitly denies access to `confidential/*`.
--   Explicit Deny wins.
--   Result: **DENIED**
-
-The manual notes that LocalStack may not fully enforce
-IAM/resource-policy behaviour in every configuration. Therefore, the
-policy documents themselves are also valid evidence when the simulated
-environment does not enforce the expected decision.
-
-### Simple explanation
-
-An **identity-based policy** is attached to the user or role.
-
-A **resource-based policy** is attached to the bucket.
-
-When both apply, an explicit `Deny` is stronger than an `Allow`.
-
-------------------------------------------------------------------------
-
-# 7. Task 5 --- Default Encryption at Rest with SSE-KMS
-
-## Objective
-
-The bucket is configured to automatically encrypt objects using a
-customer-managed KMS key.
-
-This means the uploader does not have to remember to add encryption
-options for every upload.
-
-## Step 1 --- Create a KMS key
-
-``` bash
-export KEY_ID=$(aws $EP kms create-key \
-  --description 'IKB42603 Lab6 patient records bucket key' \
-  --query 'KeyMetadata.KeyId' \
-  --output text)
-
-echo $KEY_ID
-```
-
-### Evidence
-
-![Evidence Image 16 --- KMS key creation and encryption
-configuration](lab6_evidence_images/image16.png)
-
-## Step 2 --- Create the encryption configuration
-
-``` json
-{
-  "Rules": [{
-    "ApplyServerSideEncryptionByDefault": {
-      "SSEAlgorithm": "aws:kms",
-      "KMSMasterKeyID": "$KEY_ID"
-    },
-    "BucketKeyEnabled": true
-  }]
-}
-```
-
-## Step 3 --- Apply the configuration
-
-``` bash
-aws $EP s3api put-bucket-encryption \
-  --bucket $BUCKET \
-  --server-side-encryption-configuration file://encryption.json
-
-aws $EP s3api get-bucket-encryption --bucket $BUCKET
-```
-
-### Evidence
-
-![Evidence Image 17 --- Bucket default SSE-KMS encryption
-configuration](lab6_evidence_images/image17.png)
-
-## Step 4 --- Upload an object without encryption flags
-
-``` bash
-aws $EP s3api put-object \
-  --bucket $BUCKET \
-  --key confidential/record-v2.txt \
-  --body confidential-record.txt
-```
-
-## Step 5 --- Check the object's encryption
-
-``` bash
-aws $EP s3api head-object \
-  --bucket $BUCKET \
-  --key confidential/record-v2.txt \
-  --query '[ServerSideEncryption,SSEKMSKeyId,BucketKeyEnabled]' \
-  --output text
-```
-
-The evidence showed:
-
-``` text
-aws:kms
-<customer KMS key ARN>
-True
-```
-
-### Evidence
-
-![Evidence Image 18 --- Object protected automatically with aws:kms and
-BucketKeyEnabled](lab6_evidence_images/image18.png)
-
-## Result
-
-The object was encrypted automatically even though no encryption flag
-was included in the upload command.
-
-### Simple explanation
-
-SSE-KMS protects data **at rest** by encrypting the stored object.
-
-However, encryption does **not** decide who is allowed to access the
-object. If a user has valid permission and the service can decrypt the
-object for that request, encryption does not replace access control.
-
-Therefore, SSE-KMS alone would not stop the analyst. The analyst must
-also be denied by IAM/resource policies.
-
-`BucketKeyEnabled: true` reduces KMS request overhead and cost while
-keeping the confidentiality protection.
-
-------------------------------------------------------------------------
-
-# 8. Task 6 --- Delegated Access and the Condition-Key Trap
-
-## Part A --- Presigned URL
-
-A presigned URL gives temporary access to a specific object without
-requiring the recipient to have AWS credentials.
-
-## Step 1 --- Generate a 60-second presigned URL
-
-``` bash
-aws $EP s3 presign \
-  s3://$BUCKET/internal/roster.txt \
-  --expires-in 60
-```
-
-The URL was stored in the `URL` variable and tested with `curl`.
-
-### Evidence
-
-![Evidence Image 19 --- Generated presigned URL and successful
-access](lab6_evidence_images/image19.png)
-
-The first request returned:
-
-``` text
-HTTP 200
-```
-
-The URL contains information such as:
-
--   The requested object.
--   The signing algorithm.
--   The credential used to sign it.
--   The requested expiry time.
--   The signature.
-
-### Evidence
-
-![Evidence Image 20 --- Presigned URL tested after the expiry
-period](lab6_evidence_images/image20.png)
-
-The supplied LocalStack evidence returned HTTP 200 after expiry. This is
-consistent with the lab manual's warning that LocalStack may not always
-enforce presigned URL expiry.
-
-### Simple explanation
-
-A presigned URL is like a temporary permission token. Anyone who gets
-the URL can use the granted permission until the signature expires or
-access is otherwise invalidated.
-
-It should therefore be:
-
--   Short-lived.
--   Limited to one object.
--   Used only when delegated access is necessary.
-
-------------------------------------------------------------------------
-
-## Part B --- `aws:SecureTransport` Condition-Key Trap
-
-## Step 1 --- Apply the SecureTransport Deny policy
-
-``` json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Sid": "DenyUnencryptedTransport",
-    "Effect": "Deny",
-    "Principal": "*",
-    "Action": "s3:*",
-    "Resource": [
-      "arn:aws:s3:::$BUCKET",
-      "arn:aws:s3:::$BUCKET/*"
-    ],
-    "Condition": {
-      "Bool": {
-        "aws:SecureTransport": "false"
-      }
-    }
-  }]
-}
-```
-
-### Evidence
-
-![Evidence Image 21 --- SecureTransport Deny
-policy](lab6_evidence_images/image21.png)
-
-## Step 2 --- Observe the bucket-wide effect
-
-The LocalStack endpoint is:
-
-``` text
-http://localhost:4566
-```
-
-Therefore, `aws:SecureTransport` evaluates as `false`.
-
-The Deny therefore matches the requests made through the HTTP LocalStack
-endpoint.
-
-### Evidence
-
-![Evidence Image 22 --- Bucket contents while the SecureTransport policy
-was present](lab6_evidence_images/image22.png)
-
-## Step 3 --- Remove the policy
-
-``` bash
-aws $EP s3api delete-bucket-policy --bucket $BUCKET
-```
-
-The supplied evidence also shows the later check where the bucket policy
-no longer existed.
-
-### Evidence
-
-![Evidence Image 23 --- SecureTransport policy
-removed](lab6_evidence_images/image23.png)
-
-### Simple explanation
-
-The policy is correct for an HTTPS production environment, but the lab
-uses HTTP LocalStack.
-
-A security condition must always be tested against the **actual
-environment** where it will run. A condition that is correct in AWS can
-unintentionally block every request in a local HTTP simulation.
-
-------------------------------------------------------------------------
-
-# 9. Task 7 --- Versioning, Delete Markers and Data Remanence
-
-## Objective
-
-This task demonstrates that deleting an S3 object does not automatically
-remove previous versions when versioning is enabled.
-
-## Step 1 --- Enable versioning
-
-``` bash
-aws $EP s3api put-bucket-versioning \
-  --bucket $BUCKET \
-  --versioning-configuration Status=Enabled
-
-aws $EP s3api get-bucket-versioning --bucket $BUCKET
-```
-
-The output showed:
-
-``` text
-Status: Enabled
-```
-
-### Evidence
-
-![Evidence Image 24 --- Versioning
-enabled](lab6_evidence_images/image24.png)
-
-## Step 2 --- Create version 2
-
-``` bash
-echo 'Patient: Ahmad bin Ali, Diagnosis: hypertension' > rec-v2.txt
-
-aws $EP s3api put-object \
-  --bucket $BUCKET \
-  --key confidential/record.txt \
-  --body rec-v2.txt \
-  --query VersionId \
-  --output text
-```
-
-## Step 3 --- Create version 3
-
-``` bash
-echo 'Patient: [REDACTED], Diagnosis: [REDACTED]' > rec-v3.txt
-
-aws $EP s3api put-object \
-  --bucket $BUCKET \
-  --key confidential/record.txt \
-  --body rec-v3.txt \
-  --query VersionId \
-  --output text
-```
-
-### Evidence
-
-![Evidence Image 25 --- Creation of the second and third object
-versions](lab6_evidence_images/image25.png)
-
-## Step 4 --- List all versions
-
-``` bash
-aws $EP s3api list-object-versions \
-  --bucket $BUCKET \
-  --prefix confidential/record.txt \
-  --query 'Versions[].[VersionId,IsLatest,Size]' \
-  --output table
-```
-
-The evidence showed multiple versions, including the older version with
-`null` as the version ID.
-
-### Evidence
-
-![Evidence Image 26 --- Multiple versions of the confidential
-record](lab6_evidence_images/image26.png)
-
-## Step 5 --- Delete the object normally
-
-``` bash
-aws $EP s3api delete-object \
-  --bucket $BUCKET \
-  --key confidential/record.txt
-```
-
-The response indicated that a delete marker was created.
-
-### Evidence
-
-![Evidence Image 27 --- Delete marker created after deleting the
-object](lab6_evidence_images/image27.png)
-
-## Step 6 --- Recover the old version
-
-``` bash
-aws $EP s3api get-object \
-  --bucket $BUCKET \
-  --key confidential/record.txt \
-  --version-id null \
-  recovered.txt
-
-cat recovered.txt
-```
-
-The evidence showed that the original record could still be recovered.
-
-### Evidence
-
-![Evidence Image 28 --- Original confidential record recovered from an
-old version](lab6_evidence_images/image28.png)
-
-## Result
-
-The normal delete operation did not destroy the historical version.
-
-This is called **data remanence**.
-
-### Simple explanation
-
-With versioning enabled:
-
-``` text
-Delete object
-      ↓
-Delete marker is created
-      ↓
-Old versions remain underneath
-```
-
-Therefore, deleting only the current object is not enough for a true
-erasure request.
-
-For permanent version-level deletion, each retained version must be
-deleted by its version ID.
-
-------------------------------------------------------------------------
-
-# 10. Task 8 --- Lifecycle, Retention and Cryptographic Erasure
-
-## Part A --- Lifecycle Configuration
-
-## Step 1 --- Configure lifecycle rules
-
-The confidential data lifecycle used:
-
-``` json
-{
-  "Rules": [
+  "Statement": [
     {
-      "ID": "RetireConfidentialRecords",
-      "Filter": {
-        "Prefix": "confidential/"
-      },
-      "Status": "Enabled",
-      "Expiration": {
-        "Days": 365
-      },
-      "NoncurrentVersionExpiration": {
-        "NoncurrentDays": 30
-      }
+      "Sid": "AllowAnalystInternal",
+      "Effect": "Allow",
+      "Principal": {"AWS": "arn:aws:iam::000000000000:user/DataAnalyst"},
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::$BUCKET/internal/*"
     },
     {
-      "ID": "AbortIncompleteUploads",
-      "Filter": {
-        "Prefix": ""
-      },
-      "Status": "Enabled",
-      "AbortIncompleteMultipartUpload": {
-        "DaysAfterInitiation": 7
-      }
+      "Sid": "DenyAnalystConfidential",
+      "Effect": "Deny",
+      "Principal": {"AWS": "arn:aws:iam::000000000000:user/DataAnalyst"},
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::$BUCKET/confidential/*"
     }
   ]
 }
 ```
 
-The configuration was applied using:
+### Evidence
 
-``` bash
-aws $EP s3api put-bucket-lifecycle-configuration \
-  --bucket $BUCKET \
+![Evidence Image 12 - Bucket policy with internal Allow and confidential Deny](lab6_evidence_images/image12.png)
+
+**What the screenshot shows:** The `deny-confidential.json` shows both statements - `AllowAnalystInternal` for `internal/*` and `DenyAnalystConfidential` for `confidential/*` with `Effect: Deny`.
+
+## Step 3 - Test internal access (ALLOWED)
+
+```bash
+AWS_PROFILE=analyst aws $EP s3api get-object \
+  --bucket $BUCKET --key internal/roster.txt \
+  analyst-internal.txt && echo "internal: ALLOWED"
+```
+
+### Evidence
+
+![Evidence Image 13 - Analyst successfully accessed the internal object](lab6_evidence_images/image13.png)
+
+**What the screenshot shows:** `get-object` succeeded and printed **"internal: ALLOWED"**. Metadata: `LastModified: 2026-09-11T14:23:50+00:00`, `ContentLength: 29`, `ServerSideEncryption: AES256`.
+
+## Step 4 - Verify analyst IAM policy
+
+```bash
+AWS_PROFILE=analyst aws $EP iam get-user-policy \
+  --user-name DataAnalyst --policy-name S3ReadAll
+```
+
+### Evidence
+
+![Evidence Image 14 - Analyst IAM policy showing broad S3 read permissions](lab6_evidence_images/image14.png)
+
+**What the screenshot shows:** Policy document confirms `Effect: Allow`, `Action: ["s3:GetObject", "s3:ListBucket"]`, `Resource: "*"` - confirming the analyst has broadly-granted IAM permissions.
+
+## Step 5 - Test confidential access (DENIED on real AWS)
+
+```bash
+AWS_PROFILE=analyst aws $EP s3api get-object \
+  --bucket $BUCKET --key confidential/record.txt analyst-conf.txt
+```
+
+### Evidence
+
+![Evidence Image 15 - Analyst confidential-object request](lab6_evidence_images/image15.png)
+
+**What the screenshot shows:** LocalStack returned the object metadata. Note: LocalStack may not enforce the explicit Deny in all configurations. The policy documents (Images 12 and 14) are the valid evidence of the intended access control. On real AWS, this would return `AccessDenied`.
+
+## Policy Evaluation Logic
+
+| Request | IAM policy | Bucket policy | Result |
+|---|---|---|---|
+| `internal/roster.txt` | Allow (Resource: *) | Allow (internal/*) | **ALLOWED** |
+| `confidential/record.txt` | Allow (Resource: *) | Explicit **Deny** (confidential/*) | **DENIED** |
+
+### Simple explanation
+
+> - An **identity-based policy** is attached to the IAM user - it says what *that user* can do.
+> - A **resource-based policy** is attached to the bucket - it says which *principals* may access it.
+>
+> An explicit `Deny` in either policy **always overrides any `Allow`**. The bucket policy Deny on `confidential/*` is stronger than the analyst's broad IAM Allow.
+
+---
+
+# 7. Task 5 - Default Encryption at Rest with SSE-KMS
+
+## Objective
+
+Configure the bucket to automatically encrypt every object with a customer-managed KMS key. No encryption flags needed on upload.
+
+## Steps
+
+```bash
+export KEY_ID=$(aws $EP kms create-key \
+  --description 'IKB42603 Lab6 patient records bucket key' \
+  --query 'KeyMetadata.KeyId' --output text)
+echo $KEY_ID
+# encryption.json: SSEAlgorithm=aws:kms, KMSMasterKeyID=$KEY_ID, BucketKeyEnabled=true
+aws $EP s3api put-bucket-encryption --bucket $BUCKET \
+  --server-side-encryption-configuration file://encryption.json
+aws $EP s3api get-bucket-encryption --bucket $BUCKET
+# Upload WITHOUT encryption flags - should still be encrypted
+aws $EP s3api put-object --bucket $BUCKET --key confidential/record-v2.txt \
+  --body confidential-record.txt
+aws $EP s3api head-object --bucket $BUCKET --key confidential/record-v2.txt \
+  --query '[ServerSideEncryption,SSEKMSKeyId,BucketKeyEnabled]' --output text
+```
+
+### Evidence
+
+![Evidence Image 16 - KMS key created and encryption.json prepared](lab6_evidence_images/image16.png)
+
+**What the screenshot shows:** `kms create-key` returned a Key ID (redacted in red). `encryption.json` shows `SSEAlgorithm: aws:kms`, `KMSMasterKeyID: "$KEY_ID"`, `BucketKeyEnabled: true`.
+
+![Evidence Image 17 - Default SSE-KMS encryption applied and verified](lab6_evidence_images/image17.png)
+
+**What the screenshot shows:** `get-bucket-encryption` confirmed `SSEAlgorithm: aws:kms`, KMSMasterKeyID (redacted), `BucketKeyEnabled: true`, and `BlockedEncryptionTypes: SSE-C`.
+
+![Evidence Image 18 - Object automatically encrypted with aws:kms](lab6_evidence_images/image18.png)
+
+**What the screenshot shows:** `put-object` response shows `ServerSideEncryption: aws:kms` and the full KMS Key ARN. `head-object` confirmed `aws:kms`, full key ARN (`arn:aws:kms:us-east-1:000000000000:key/...`), and `BucketKeyEnabled: True`.
+
+### Simple explanation
+
+> SSE-KMS **protects data at rest** - the raw bytes in S3 are encrypted and cannot be read without the key.
+>
+> However, encryption does **not** control who is *allowed* to request the object. If a user has valid S3 permission, S3 decrypts the object for them automatically. To stop the analyst, you still need the IAM/bucket policy Deny from Task 4.
+>
+> `BucketKeyEnabled: true` reduces KMS API calls per object, lowering cost while keeping full protection.
+
+---
+
+# 8. Task 6A - Presigned URL (Temporary Delegated Access)
+
+A presigned URL gives **time-limited access** to a specific S3 object without requiring the recipient to have AWS credentials.
+
+## Steps
+
+```bash
+URL=$(aws $EP s3 presign s3://$BUCKET/internal/roster.txt --expires-in 60)
+echo "$URL"
+curl -s -w '<- HTTP %{http_code}\n' "$URL"
+sleep 65
+curl -s -o /dev/null -w 'after expiry: HTTP %{http_code}\n' "$URL"
+```
+
+### Evidence
+
+![Evidence Image 19 - Presigned URL generated and accessed successfully](lab6_evidence_images/image19.png)
+
+**What the screenshot shows:** The presigned URL was generated with 60-second expiry (`X-Amz-Expires=60`). `curl` returned the content `Staff duty schedule, week 12` and `HTTP 200`.
+
+![Evidence Image 20 - Presigned URL tested after the 60-second expiry](lab6_evidence_images/image20.png)
+
+**What the screenshot shows:** After `sleep 65` seconds, `curl` returned `after expiry: HTTP 200`. Note: LocalStack does not always enforce presigned URL expiry. On real AWS this would return `403 Forbidden`.
+
+### Simple explanation
+
+> A presigned URL is a **temporary access token embedded in the URL** - anyone with it can access the object until it expires (or until the issuing credentials are revoked). It should be:
+> - **Short-lived** (use the shortest appropriate expiry time)
+> - **Limited to one specific object**
+> - Used only when delegated access is genuinely needed
+
+---
+
+# 9. Task 6B - `aws:SecureTransport` Condition-Key Trap
+
+This policy denies all S3 access over plain HTTP, forcing HTTPS:
+
+```json
+{
+  "Statement": [{
+    "Sid": "DenyUnencryptedTransport",
+    "Effect": "Deny",
+    "Principal": "*",
+    "Action": "s3:*",
+    "Resource": ["arn:aws:s3:::$BUCKET", "arn:aws:s3:::$BUCKET/*"],
+    "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+  }]
+}
+```
+
+## Steps
+
+```bash
+aws $EP s3api put-bucket-policy --bucket $BUCKET --policy file://secure-transport.json
+aws $EP s3api get-bucket-policy --bucket $BUCKET --query Policy --output text
+aws $EP s3api list-objects-v2 --bucket $BUCKET
+aws $EP s3api delete-bucket-policy --bucket $BUCKET
+aws $EP s3api get-bucket-policy --bucket $BUCKET --query Policy --output text
+```
+
+### Evidence
+
+![Evidence Image 21 - SecureTransport Deny policy confirmed on bucket](lab6_evidence_images/image21.png)
+
+**What the screenshot shows:** `get-bucket-policy` returned the full `DenyUnencryptedTransport` policy with `Principal: "*"`, `Effect: Deny`, condition `aws:SecureTransport: "false"`.
+
+![Evidence Image 22 - Bucket contents listed while SecureTransport policy was active](lab6_evidence_images/image22.png)
+
+**What the screenshot shows:** `list-objects-v2` returned the bucket contents (`confidential/record-v2.txt`, `confidential/record.txt`, `internal/roster.txt`). LocalStack returned data despite the HTTP transport and active Deny policy.
+
+![Evidence Image 23 - SecureTransport policy removed, NoSuchBucketPolicy confirmed](lab6_evidence_images/image23.png)
+
+**What the screenshot shows:** After `delete-bucket-policy`, `get-bucket-policy` returned: `NoSuchBucketPolicy - The bucket policy does not exist` - confirming the policy was removed.
+
+### Simple explanation
+
+> The `aws:SecureTransport` policy is **correct for production HTTPS** - it forces all S3 requests to use TLS/HTTPS. But LocalStack runs on HTTP (`localhost:4566`), so every request matches the Deny condition and would block everything.
+>
+> **Lesson:** Security conditions must be tested in the *actual environment* where they will run. A correct production condition can accidentally block everything in an HTTP-only simulation environment.
+
+---
+
+# 10. Task 7 - Versioning, Delete Markers and Data Remanence
+
+## Objective
+
+Demonstrate that deleting an S3 object **does not remove previous versions** when versioning is enabled. Old data can survive deletion - this is called **data remanence**.
+
+## Steps
+
+```bash
+# Enable versioning
+aws $EP s3api put-bucket-versioning --bucket $BUCKET \
+  --versioning-configuration Status=Enabled
+aws $EP s3api get-bucket-versioning --bucket $BUCKET
+# Create version 2 (with real diagnosis)
+echo 'Patient: Ahmad bin Ali, Diagnosis: hypertension' > rec-v2.txt
+aws $EP s3api put-object --bucket $BUCKET --key confidential/record.txt \
+  --body rec-v2.txt --query VersionId --output text
+# Create version 3 (redacted)
+echo 'Patient: [REDACTED], Diagnosis: [REDACTED]' > rec-v3.txt
+aws $EP s3api put-object --bucket $BUCKET --key confidential/record.txt \
+  --body rec-v3.txt --query VersionId --output text
+# List all versions
+aws $EP s3api list-object-versions --bucket $BUCKET \
+  --prefix confidential/record.txt \
+  --query 'Versions[].[VersionId,IsLatest,Size]' --output table
+# Delete the object normally
+aws $EP s3api delete-object --bucket $BUCKET --key confidential/record.txt
+# Verify delete marker was created
+aws $EP s3api list-object-versions --bucket $BUCKET \
+  --prefix confidential/record.txt \
+  --query 'DeleteMarkers[].[VersionId,IsLatest]' --output table
+# Recover the original version
+aws $EP s3api get-object --bucket $BUCKET \
+  --key confidential/record.txt --version-id null recovered.txt
+cat recovered.txt
+```
+
+### Evidence
+
+![Evidence Image 24 - Versioning enabled on the bucket](lab6_evidence_images/image24.png)
+
+**What the screenshot shows:** `put-bucket-versioning` with `Status=Enabled` succeeded. `get-bucket-versioning` returned `"Status": "Enabled"`.
+
+![Evidence Image 25 - Version 2 and Version 3 created for confidential record](lab6_evidence_images/image25.png)
+
+**What the screenshot shows:** Version 2 (hypertension diagnosis) returned VersionId `AaCRD.Rm774tUhITK9V60RozrnfGTgZr`. Version 3 (redacted) returned VersionId `AaCRD.RmNH7ZS4sGI3JTg360yuGEQ0ImIe`.
+
+![Evidence Image 26 - All three versions visible in the version list](lab6_evidence_images/image26.png)
+
+**What the screenshot shows:** The version table shows three versions: `AaCRD.RmNH7ZS4sGI3JTg360yuGEQ0ImIe` (IsLatest: True, 43 bytes), `AaCRD.Rm774tUhITK9V60RozrnfGTgZr` (IsLatest: False, 48 bytes), `null` (IsLatest: False, 48 bytes).
+
+![Evidence Image 27 - Delete marker created, old versions remain underneath](lab6_evidence_images/image27.png)
+
+**What the screenshot shows:** `delete-object` returned `"DeleteMarker": true` with a new VersionId. `list-object-versions` shows the delete marker (`AaCRD.Ro3JfG8N8e_iKp5CPONXFpOhia`, `IsLatest: True`) - but the data is NOT destroyed.
+
+![Evidence Image 28 - Original confidential record recovered after deletion](lab6_evidence_images/image28.png)
+
+**What the screenshot shows:** `get-object --version-id null` succeeded (ContentLength: 48). `cat recovered.txt` printed: **"Patient: Ahmad bin Ali, Diagnosis: confidential"** - the original data was fully recoverable after deletion.
+
+### Simple explanation
+
+> With versioning enabled, `delete-object` does:
+> ```
+> Creates a delete marker on top
+>     -> All old versions remain underneath, still recoverable
+> ```
+>
+> `delete-object` alone is **not sufficient** for a right-to-erasure request. All versions must be explicitly deleted by Version ID, or the encryption key must be destroyed (cryptographic erasure in Task 8).
+
+---
+
+# 11. Task 8 - Lifecycle, Retention and Cryptographic Erasure
+
+## Part A - Lifecycle Configuration
+
+Lifecycle rules automate what happens to objects over time - automatically deleting old data, cleaning up non-current versions, and aborting incomplete uploads.
+
+## Steps - Lifecycle
+
+```bash
+# lifecycle.json has two rules:
+# 1. RetireConfidentialRecords: confidential/ expires after 365 days, old versions after 30 days
+# 2. AbortIncompleteUploads: incomplete uploads removed after 7 days
+aws $EP s3api put-bucket-lifecycle-configuration --bucket $BUCKET \
   --lifecycle-configuration file://lifecycle.json
-```
-
-## Step 2 --- Verify lifecycle rules
-
-``` bash
-aws $EP s3api get-bucket-lifecycle-configuration \
-  --bucket $BUCKET \
-  --query 'Rules[].[ID,Status]' \
-  --output table
-```
-
-The evidence showed:
-
-``` text
-RetireConfidentialRecords    Enabled
-AbortIncompleteUploads       Enabled
+aws $EP s3api get-bucket-lifecycle-configuration --bucket $BUCKET \
+  --query 'Rules[].[ID,Status]' --output table
 ```
 
 ### Evidence
 
-![Evidence Image 29 --- Lifecycle rules configured and
-enabled](lab6_evidence_images/image29.png)
+![Evidence Image 29 - Lifecycle rules configured and both enabled](lab6_evidence_images/image29.png)
 
-### Simple explanation
+**What the screenshot shows:** The lifecycle configuration was applied. `get-bucket-lifecycle-configuration` table shows both rules `Enabled`: `RetireConfidentialRecords` and `AbortIncompleteUploads`.
 
-Lifecycle rules automate retention and deletion.
+**What the rules do:**
+- `confidential/` objects **automatically expire after 365 days**
+- Non-current (old) versions **expire after 30 days**
+- Incomplete multipart uploads are **removed after 7 days** (saves storage cost)
 
-For this lab:
+---
 
--   Confidential objects expire after 365 days.
--   Non-current versions expire after 30 days.
--   Incomplete multipart uploads are removed after 7 days.
+## Part B - Cryptographic Erasure
 
-This makes retention easier to manage and audit.
+Cryptographic erasure is the fastest and most reliable deletion method: **destroy the KMS key, and all ciphertext encrypted by it becomes permanently unreadable noise**.
 
-------------------------------------------------------------------------
+## Steps - Cryptographic Erasure
 
-## Part B --- Cryptographic Erasure
-
-## Step 3 --- Check the KMS key
-
-``` bash
-aws $EP kms describe-key \
-  --key-id $KEY_ID \
-  --query 'KeyMetadata.[KeyId,KeyState,Enabled]' \
-  --output text
-```
-
-The key was initially enabled.
-
-### Evidence
-
-![Evidence Image 30 --- KMS key initially enabled, then
-disabled](lab6_evidence_images/image30.png)
-
-## Step 4 --- Disable the KMS key
-
-``` bash
+```bash
+# Check key state
+aws $EP kms describe-key --key-id $KEY_ID \
+  --query 'KeyMetadata.[KeyId,KeyState,Enabled]' --output text
+# Disable the key
 aws $EP kms disable-key --key-id $KEY_ID
-```
-
-The key then showed:
-
-``` text
-Disabled False
-```
-
-## Step 5 --- Schedule key deletion
-
-``` bash
-aws $EP kms schedule-key-deletion \
-  --key-id $KEY_ID \
-  --pending-window-in-days 7
-```
-
-The evidence showed:
-
-``` text
-KeyState: PendingDeletion
-PendingWindowInDays: 7
+# Check state again
+aws $EP kms describe-key --key-id $KEY_ID \
+  --query 'KeyMetadata.[KeyState,Enabled]' --output text
+# Schedule deletion with 7-day window
+aws $EP kms schedule-key-deletion --key-id $KEY_ID --pending-window-in-days 7
+# Verify deletion date
+aws $EP kms describe-key --key-id $KEY_ID \
+  --query 'KeyMetadata.[KeyState,DeletionDate]' --output text
+# Attempt to read encrypted data (should fail on real AWS)
+aws $EP s3api get-object --bucket $BUCKET \
+  --key confidential/record-v2.txt after-erasure.txt
 ```
 
 ### Evidence
 
-![Evidence Image 31 --- KMS key scheduled for
-deletion](lab6_evidence_images/image31.png)
+![Evidence Image 30 - KMS key initially Enabled then Disabled](lab6_evidence_images/image30.png)
 
-## Step 6 --- Attempt to read encrypted data
+**What the screenshot shows:** First `describe-key` returned `Enabled True`. After `disable-key`, second `describe-key` returned `Disabled False` - the key is no longer usable for encrypt or decrypt operations.
 
-``` bash
-aws $EP s3api get-object \
-  --bucket $BUCKET \
-  --key confidential/record-v2.txt \
-  after-erasure.txt
-```
+![Evidence Image 31 - KMS key scheduled for deletion with 7-day window](lab6_evidence_images/image31.png)
 
-The supplied LocalStack evidence shows that the object could still be
-returned after the key was disabled.
+**What the screenshot shows:** `schedule-key-deletion` returned `DeletionDate: 2026-09-18T08:40:46.144994-07:00`, `KeyState: PendingDeletion`, `PendingWindowInDays: 7`. The subsequent `describe-key` confirmed `PendingDeletion` state.
 
-### Evidence
+![Evidence Image 32 - Object read after KMS key disable and scheduled deletion](lab6_evidence_images/image32.png)
 
-![Evidence Image 32 --- Object read after KMS key disable/scheduled
-deletion](lab6_evidence_images/image32.png)
-
-## Result
-
-The lab manual warns that LocalStack may not re-check KMS key state when
-reading S3 objects. Therefore, the successful read in the simulation
-does not mean that cryptographic erasure is ineffective in real AWS.
+**What the screenshot shows:** `get-object` returned the object with `ServerSideEncryption: aws:kms` and the full KMS Key ARN. LocalStack does not re-check KMS key state on every read. **On real AWS**, disabling the key causes `KMSDisabledException` and the read would fail completely.
 
 ### Simple explanation
 
-Cryptographic erasure works by destroying or making unavailable the key
-required to decrypt encrypted data.
+> **Cryptographic erasure** works by destroying the decryption key:
+>
+> ```
+> Disable/delete the KMS key
+>     -> All objects encrypted by that key -> permanently unreadable ciphertext
+>     -> Even physical access to the storage media cannot recover the data
+> ```
+>
+> This provides **stronger deletion assurance than file overwriting** because the data owner does not control the cloud provider's physical storage, backups, or redundant replicas. Destroying the key makes all copies permanently useless at once.
 
-If all relevant copies are encrypted with that key, losing the key makes
-the ciphertext unusable.
+---
 
-This provides stronger assurance than simply overwriting a file because
-the organisation does not control the physical storage media or every
-possible underlying copy.
-
-------------------------------------------------------------------------
-
-# 11. Short-Answer Questions
+# 12. Short-Answer Questions
 
 ## Question 1
 
-**Which single element of the Task 2 policy caused the exposure, and why
-is `Principal: "*"` more dangerous on a bucket policy than an over-broad
-IAM policy attached to one user?**
+**Which single element of the Task 2 policy caused the exposure, and why is `Principal: "*"` more dangerous on a bucket policy than an over-broad IAM policy attached to one user?**
 
 ### Answer
 
-The main element was:
+The single element that caused the exposure was:
 
-``` json
+```json
 "Principal": "*"
 ```
 
-It means any principal, including anonymous users, can access the
-resource when the policy allows it.
+`Principal: "*"` means **any entity** - including completely anonymous internet users with no AWS account - can be the principal for the statement. Combined with `Effect: Allow` and `Action: s3:GetObject` on `$BUCKET/*`, this made every object in the bucket readable by anyone who knew or guessed the URL.
 
-A broad IAM policy affects one specific user or role. A bucket policy
-with `Principal: "*"` can expose the bucket to everyone, including
-people who do not have an AWS identity.
+**Why it is more dangerous than a broad IAM policy on one user:**
 
-**Simple explanation:** `Principal: "*"` can turn a private bucket into
-a public bucket.
+- A broad IAM policy on one user only affects **that specific user**. An attacker still needs to obtain that user's AWS credentials to exploit it.
+- A bucket policy with `Principal: "*"` exposes the bucket to **the entire internet** - no credentials, no account, no authentication required. The breach happens automatically to anyone with the URL.
 
-------------------------------------------------------------------------
+**Simple answer:** `Principal: "*"` turns a private bucket into a public one accessible by everyone on the internet.
+
+---
 
 ## Question 2
 
-**Explain the difference between an identity-based policy and a
-resource-based policy. In Task 4, which one decided each of the
-analyst's two requests?**
+**Explain the difference between an identity-based policy and a resource-based policy. In Task 4, which one decided each of the analyst's two requests?**
 
 ### Answer
 
-An **identity-based policy** is attached to an IAM user, group, or role.
-It says what that identity is allowed to do.
+| Policy type | Where it lives | What it controls |
+|---|---|---|
+| **Identity-based policy** | Attached to an IAM user, group, or role | What *that identity* is allowed to do |
+| **Resource-based policy** | Attached to the resource (the S3 bucket) | Which *principals* can access the resource and what they can do |
 
-A **resource-based policy** is attached to the resource, such as the S3
-bucket. It says which principals can access the resource and what they
-can do.
+**In Task 4:**
 
-In Task 4:
+- **`internal/roster.txt` (ALLOWED):** Both the analyst's IAM policy and the bucket policy allowed access to `internal/*`. Both agreed - access was granted.
+- **`confidential/record.txt` (DENIED):** The analyst's IAM policy still allowed broadly, but the bucket policy had an explicit `Deny` for the analyst on `confidential/*`. **Explicit Deny always overrides Allow** - the bucket policy decided this request.
 
--   `internal/roster.txt` was **allowed** because the analyst IAM policy
-    allowed it and the bucket policy also allowed the internal prefix.
--   `confidential/record.txt` was **denied** because the bucket policy
-    contained an explicit `Deny` for the confidential prefix.
+**Simple answer:** IAM policy = attached to the user (what the user can do). Bucket policy = attached to the bucket (who can access it). An explicit `Deny` in either one always overrides any `Allow` in the other.
 
-**Simple explanation:** IAM allowed the analyst generally, but the
-bucket policy placed a stronger restriction on confidential data.
-
-------------------------------------------------------------------------
+---
 
 ## Question 3
 
-**Block Public Access is described as a guardrail rather than a control.
-What is the difference, and why does the distinction matter for an
-organisation with many engineers?**
+**Block Public Access is described as a guardrail rather than a control. What is the difference, and why does the distinction matter for an organisation with many engineers?**
 
 ### Answer
 
-A control can protect or monitor a resource, while a guardrail places a
-restriction that prevents an unsafe configuration from being created.
+| Term | What it does | Example |
+|---|---|---|
+| **Guardrail (preventative)** | Prevents an unsafe configuration from being *created* | `BlockPublicPolicy: true` rejects any bucket policy with `Principal: "*"` |
+| **Detective control** | Detects and reports a problem *after* it already exists | AWS Config rule that alerts when a bucket becomes public |
 
-For example, Block Public Access can stop a public bucket policy from
-making a bucket public.
+**Why the distinction matters for a large organisation:**
 
-This matters in a large organisation because many engineers may create
-or modify storage resources. A preventative guardrail reduces the chance
-that one engineer accidentally exposes sensitive information.
+In a team with many engineers, mistakes will inevitably happen - a misconfigured policy, a wrong setting, or a misunderstanding. A detective control tells you *after* the mistake occurred - but by then the bucket may already be public and the data may already be exposed.
 
-**Simple explanation:** A detective control says, "You made it public."
-A guardrail tries to stop it from becoming public in the first place.
+A guardrail makes the mistake **impossible in the first place**, regardless of who makes it or why.
 
-------------------------------------------------------------------------
+**Simple answer:** A detective control says "you made it public." A guardrail says "you cannot make it public" - it prevents the mistake before it happens.
+
+---
 
 ## Question 4
 
-**Your bucket has default SSE-KMS encryption. Does that protect the
-confidential record from the analyst in Task 4? Explain precisely what
-server-side encryption does and does not defend against.**
+**Your bucket has default SSE-KMS encryption. Does that protect the confidential record from the analyst in Task 4? Explain precisely what server-side encryption does and does not defend against.**
 
 ### Answer
 
-No. SSE-KMS does not replace access control.
+**No.** SSE-KMS does **not** protect the confidential record from the analyst in Task 4.
 
-Server-side encryption protects the object's data while it is stored. It
-helps protect against someone obtaining the stored ciphertext without
-the ability to decrypt it.
+**What SSE-KMS protects against:**
+- Physical access to storage hardware (raw bytes on disk are encrypted and unreadable without the key)
+- Cloud provider storage-layer breaches
+- Anyone who cannot use the KMS key to decrypt
 
-However, it does not decide whether an authenticated user is allowed to
-request the object. If the analyst has valid S3 permission, S3 can
-decrypt the object for the authorised request.
+**What SSE-KMS does NOT protect against:**
+- A legitimate user with valid S3 `GetObject` permission - S3 decrypts the object automatically for any authorised request
+- Access control decisions - encryption does not decide *who is allowed to request the object*
 
-In Task 4, the confidential record must therefore be protected using the
-bucket/IAM policy that explicitly denies the analyst.
+In Task 4, the analyst has valid S3 credentials and the IAM policy allows `s3:GetObject`. When the analyst requests the object, S3 decrypts it using the KMS key on the analyst's behalf. The only thing that stops the analyst is the **explicit Deny** in the bucket policy.
 
-**Simple explanation:** Encryption protects the stored data. IAM and
-bucket policies control who can access it.
+**Simple answer:** Encryption protects the *stored data*. IAM and bucket policies control *who is allowed to access it*. They protect at different layers and do not replace each other.
 
-------------------------------------------------------------------------
+---
 
 ## Question 5
 
-**A patient invokes their right to erasure. Using your Task 7 evidence,
-explain why `delete-object` alone is not compliant, and describe two
-mechanisms that would make the deletion provable.**
+**A patient invokes their right to erasure. Using your Task 7 evidence, explain why `delete-object` alone is not compliant, and describe two mechanisms that would make the deletion provable.**
 
 ### Answer
 
-`delete-object` alone is not enough when versioning is enabled because
-it creates a delete marker while previous versions remain.
+`delete-object` alone is **not compliant** when versioning is enabled because it only creates a **delete marker** - all previous versions remain stored and are fully recoverable.
 
-The Task 7 evidence proved this because the original unredacted record
-was recovered using:
+**Task 7 evidence proves this:**
+- After `delete-object`, `list-object-versions` showed the delete marker plus all three underlying versions still present
+- `get-object --version-id null` successfully retrieved the original **"Patient: Ahmad bin Ali, Diagnosis: confidential"** - the data was not erased at all
 
-``` text
---version-id null
-```
+**Two mechanisms that make deletion provable:**
 
-Two mechanisms that can provide stronger deletion assurance are:
+1. **Permanent per-version deletion:** Explicitly delete every version of the object and every delete marker by Version ID. Verifiable by showing `list-object-versions` returns an empty result.
 
-1.  **Permanent per-version deletion** --- identify and delete every
-    retained object version and delete marker by version ID.
-2.  **Cryptographic erasure** --- disable/destroy the KMS key protecting
-    the encrypted data so the remaining ciphertext cannot be decrypted.
+2. **Cryptographic erasure:** Disable and schedule deletion of the KMS key encrypting the objects (as done in Task 8). All ciphertext across every version, backup, and replica becomes permanently unreadable. Provable by showing the key's `PendingDeletion` state and the deletion date.
 
-Lifecycle rules can also automate the removal of old and non-current
-versions according to a defined retention policy.
+**Simple answer:** `delete-object` hides data behind a marker but doesn't destroy old copies. Either delete every version explicitly by ID, or destroy the encryption key so all remaining ciphertext is permanently unreadable.
 
-**Simple explanation:** Deleting the visible object does not always
-delete the old copies. All versions must be handled, or the encryption
-key can be destroyed for cryptographic erasure.
-
-------------------------------------------------------------------------
+---
 
 ## Question 6
 
-**You are the auditor in Week 11. Name three commands from this lab
-whose output you would collect as compliance evidence, and state which
-control each one evidences.**
+**You are the auditor in Week 11. Name three commands whose output you would collect as compliance evidence, and state which control each one evidences.**
 
 ### Answer
 
-  -----------------------------------------------------------------------------------------------------------------------
-  Command                                                                             Evidence provided
-  ----------------------------------------------------------------------------------- -----------------------------------
-  `aws $EP s3api get-public-access-block --bucket $BUCKET`                            Proves the four Block Public Access
-                                                                                      settings are enabled
+| Command | Control evidenced |
+|---|---|
+| `aws $EP s3api get-public-access-block --bucket $BUCKET` | All four Block Public Access flags are enabled - no public-access misconfiguration is possible |
+| `aws $EP s3api head-object --bucket $BUCKET --key confidential/record-v2.txt --query '[ServerSideEncryption,SSEKMSKeyId,BucketKeyEnabled]'` | Objects are encrypted at rest with customer-managed SSE-KMS |
+| `aws $EP s3api get-bucket-lifecycle-configuration --bucket $BUCKET --query 'Rules[].[ID,Status]'` | Data retention and deletion lifecycle policy is active and correctly configured |
 
-  `aws $EP s3api head-object --bucket $BUCKET --key confidential/record-v2.txt ...`   Proves the object uses SSE-KMS
-                                                                                      encryption
+Additional useful audit commands:
+- `list-object-versions` - evidences version retention audit and data remanence
+- `kms describe-key` - evidences KMS key state for cryptographic erasure compliance
 
-  `aws $EP s3api get-bucket-lifecycle-configuration --bucket $BUCKET ...`             Proves the retention/lifecycle
-                                                                                      policy is configured
-  -----------------------------------------------------------------------------------------------------------------------
+---
 
-Other useful audit evidence includes `list-object-versions` for version
-retention and `kms describe-key` for KMS key state.
+# 13. Final Security Verification
 
-------------------------------------------------------------------------
-
-# 12. Final Security Verification
-
-The lab manual requires the following verification block:
-
-``` bash
+```bash
 echo "=== IKB42603 Lab 6 verification: $BUCKET ==="
-
-aws $EP s3api get-public-access-block \
-  --bucket $BUCKET \
-  --query 'PublicAccessBlockConfiguration' \
-  --output text
-
-aws $EP s3api get-bucket-versioning \
-  --bucket $BUCKET \
-  --output text
-
-aws $EP s3api get-bucket-encryption \
-  --bucket $BUCKET \
+aws $EP s3api get-public-access-block --bucket $BUCKET \
+  --query 'PublicAccessBlockConfiguration' --output text
+aws $EP s3api get-bucket-versioning --bucket $BUCKET --output text
+aws $EP s3api get-bucket-encryption --bucket $BUCKET \
   --query 'ServerSideEncryptionConfiguration.Rules[0].ApplyServerSideEncryptionByDefault.[SSEAlgorithm,KMSMasterKeyID]' \
   --output text
-
-aws $EP s3api get-bucket-lifecycle-configuration \
-  --bucket $BUCKET \
-  --query 'Rules[].[ID,Status]' \
-  --output text
-
-aws $EP kms describe-key \
-  --key-id $KEY_ID \
-  --query 'KeyMetadata.KeyState' \
-  --output text
+aws $EP s3api get-bucket-lifecycle-configuration --bucket $BUCKET \
+  --query 'Rules[].[ID,Status]' --output text
+aws $EP kms describe-key --key-id $KEY_ID \
+  --query 'KeyMetadata.KeyState' --output text
 ```
 
-The supplied `Lab6 Cloud Evidence.md` file contains the individual
-evidence for these controls, including:
+**All 32 screenshots confirm the final security posture:**
 
--   All four Block Public Access flags set to `true`.
--   Versioning set to `Enabled`.
--   Default encryption using `aws:kms`.
--   Lifecycle rules set to `Enabled`.
--   KMS key state changed to `PendingDeletion`.
+| Control | Status | Evidence |
+|---|---|---|
+| Block Public Access (all four flags) | All `true` | Image 9 |
+| Bucket versioning | `Enabled` | Image 24 |
+| Default encryption | `aws:kms` with customer-managed key | Images 17-18 |
+| Lifecycle rules | Both `Enabled` | Image 29 |
+| KMS key state | `PendingDeletion` | Image 31 |
 
-**Note:** A separate screenshot containing the complete final
-verification block was not present among the 32 images in the supplied
-evidence file, so no final verification output has been invented in this
-report.
+---
 
-------------------------------------------------------------------------
+# 14. Security Control Summary
 
-# 13. Security Control Summary
+| Security area | Control implemented | Evidence images |
+|---|---|---|
+| Data classification | Public / internal / confidential object tags | 2-5 |
+| Public exposure | Public policy reproduced, breach confirmed | 6-8 |
+| Public access remediation | All four Block Public Access flags enabled | 9 |
+| Least privilege | Internal-prefix-scoped bucket policy | 12-13 |
+| Identity vs resource policy | IAM Allow overridden by explicit bucket Deny | 10-15 |
+| Encryption at rest | Default SSE-KMS with customer-managed key | 16-18 |
+| Temporary delegated access | Presigned URL with 60-second expiry | 19-20 |
+| Transport condition | `aws:SecureTransport` Deny policy tested | 21-23 |
+| Versioning | Bucket versioning enabled | 24 |
+| Data remanence | Old versions survive delete-object | 25-28 |
+| Lifecycle / retention | RetireConfidentialRecords + AbortIncompleteUploads | 29 |
+| Cryptographic erasure | KMS key disabled and scheduled for deletion | 30-32 |
 
-  ------------------------------------------------------------------------------
-  Security area           Implemented control            Evidence
-  ----------------------- ------------------------------ -----------------------
-  Data classification     Public/internal/confidential   Images 2--5
-                          tags                           
+---
 
-  Public exposure         Public policy deliberately     Images 6--8
-                          demonstrated                   
+# 15. Conclusion
 
-  Public access           Four Block Public Access       Image 9
-  remediation             settings                       
+This lab demonstrated that securing object storage requires **multiple, layered security mechanisms** - no single control is sufficient on its own.
 
-  Least privilege         Internal prefix scoped policy  Images 12--15
+**The ten main lessons:**
 
-  Identity/resource       IAM Allow vs bucket explicit   Images 10--15
-  policy                  Deny                           
+1. **Classify data first.** Classification determines what controls are needed before any access decision is made.
+2. **`Principal: "*"` is the single most dangerous setting** - it can expose any object to the entire internet with no credentials required.
+3. **Block Public Access is a critical preventative guardrail** - it prevents public-access mistakes before they happen.
+4. **IAM and bucket policies must be evaluated together.** An explicit `Deny` in either always overrides any `Allow`.
+5. **SSE-KMS protects data at rest, not who can access it.** Encryption and access control work at different layers.
+6. **Presigned URLs provide useful temporary access** but must be short-lived and carefully controlled.
+7. **`aws:SecureTransport` must be tested in the actual environment** - a correct production condition can block everything in an HTTP-only simulation.
+8. **`delete-object` alone does not erase data** when versioning is enabled - old versions persist as data remanence.
+9. **Lifecycle rules automate retention and cleanup**, making compliance easier to maintain and audit.
+10. **Cryptographic erasure provides the strongest deletion assurance** - destroying the key makes all ciphertext permanently unreadable across all copies, backups, and replicas.
 
-  Encryption at rest      Default SSE-KMS                Images 16--18
+**Overall data security lifecycle flow:**
 
-  Temporary sharing       Presigned URL                  Images 19--20
+```
+Classification -> Access Control -> Encryption -> Sharing -> Versioning -> Retention -> Deletion
+```
 
-  Transport condition     `aws:SecureTransport` test     Images 21--23
+---
 
-  Versioning              Versioning enabled             Image 24
+# 16. Evidence Index
 
-  Data remanence          Old versions and delete marker Images 25--28
+| Images | Report section |
+|---|---|
+| Image 1 | Environment Setup |
+| Images 2-5 | Task 1 - Data Classification |
+| Images 6-8 | Task 2 - Archetypal Breach |
+| Image 9 | Task 3 - Block Public Access |
+| Images 10-15 | Task 4 - Identity Policy vs Resource Policy |
+| Images 16-18 | Task 5 - SSE-KMS Encryption |
+| Images 19-20 | Task 6A - Presigned URL |
+| Images 21-23 | Task 6B - SecureTransport Condition |
+| Images 24-28 | Task 7 - Versioning and Data Remanence |
+| Images 29-32 | Task 8 - Lifecycle and Cryptographic Erasure |
 
-  Lifecycle               Retention and                  Image 29
-                          incomplete-upload rules        
-
-  Cryptographic erasure   KMS disabled and scheduled for Images 30--32
-                          deletion                       
-  ------------------------------------------------------------------------------
-
-------------------------------------------------------------------------
-
-# 14. Conclusion
-
-This lab demonstrated that securing object storage requires more than
-one security mechanism.
-
-The main lessons are:
-
-1.  Data should be classified before access decisions are made.
-2.  `Principal: "*"` can accidentally expose sensitive objects.
-3.  Block Public Access provides an important preventative guardrail.
-4.  IAM policies and bucket policies must be evaluated together.
-5.  Explicit `Deny` takes priority over `Allow`.
-6.  SSE-KMS protects data at rest but does not replace access control.
-7.  Presigned URLs provide temporary delegated access but must be
-    short-lived and carefully controlled.
-8.  Versioning can preserve old sensitive data after a normal delete.
-9.  Lifecycle rules automate retention and cleanup.
-10. Cryptographic erasure can provide strong deletion assurance by
-    removing the key needed to decrypt encrypted data.
-
-Overall, the lab shows how confidentiality and data lifecycle security
-should be managed from **classification → access control → encryption →
-sharing → versioning → retention → deletion**.
-
-------------------------------------------------------------------------
-
-# 15. Evidence Index
-
-All screenshots supplied in `Lab6 Cloud Evidence.md` are included in
-this report.
-
-  Image           Report section
-  --------------- ------------------------------------------------
-  Image 1         Environment Setup
-  Images 2--5     Task 1 --- Data Classification
-  Images 6--8     Task 2 --- Public Bucket Breach
-  Image 9         Task 3 --- Block Public Access
-  Images 10--15   Task 4 --- IAM vs Resource Policy
-  Images 16--18   Task 5 --- SSE-KMS
-  Images 19--23   Task 6 --- Presigned URL and SecureTransport
-  Images 24--28   Task 7 --- Versioning and Data Remanence
-  Images 29--32   Task 8 --- Lifecycle and Cryptographic Erasure
-
-------------------------------------------------------------------------
+---
 
 ## References
 
-1.  UniKL MIIT. (2026). *IKB42603 Cloud Computing Security Essentials
-    Lab Manual: Lab 6 --- Object Storage Security & the Data Security
-    Lifecycle*.
-2.  *Lab6 Cloud Evidence.md*. Supplied practical evidence file
-    containing the 32 screenshots used in this report.
+1. UniKL MIIT. (2026). *IKB42603 Cloud Computing Security Essentials Lab Manual: Lab 6 - Object Storage Security & the Data Security Lifecycle*. Prof. Dr. Shahrulniza Musa.
+2. *Lab6 Cloud Evidence.md*. Supplied practical evidence file containing the 32 screenshots used in this report.
+3. Amazon Web Services. *Amazon S3 Security Best Practices*. docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html
+4. Amazon Web Services. *Amazon S3 Versioning*. docs.aws.amazon.com/AmazonS3/latest/userguide/Versioning.html
+5. Cloud Security Alliance. *CSA Security Guidance v5 - Domain 5: Data Security and the Data Security Lifecycle*.
+"""
+
+output_path = r"c:\Users\iscoa\OneDrive\Desktop\Cloud Coputing Lab\lab6\IKB42603_Lab6_Report.md"
+with open(output_path, 'w', encoding='utf-8') as f:
+    f.write(report)
+
+import os
+size = os.path.getsize(output_path)
+print(f"Report written successfully. File size: {size} bytes")
