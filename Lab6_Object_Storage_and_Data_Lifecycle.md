@@ -3,13 +3,17 @@
 # Lab 6 Report --- Object Storage Security & the Data Security Lifecycle
 
 **Student Name:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Muhammad Akmal Irfan Albakri Bin Ikmal Hisham
+
 **Student ID:**
-\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
-**Course:** IKB42603 Cloud Computing Security Essentials\
+52215124003
+
+**Course:** IKB42603 Cloud Computing Security Essentials
+
 **Lab:** Lab 6 --- Object Storage Security & the Data Security
-Lifecycle\
-**Platform:** Amazon S3 on LocalStack\
+Lifecycle
+
+**Platform:** Amazon S3 on LocalStack
 **Date:** 11 September 2026
 
 ------------------------------------------------------------------------
@@ -68,8 +72,8 @@ The identity check returned the LocalStack dummy AWS account
 
 ### Evidence
 
-![Evidence Image 1 --- LocalStack setup and caller
-identity](lab6_evidence_images/image1.png)
+<img width="775" height="470" alt="image" src="https://github.com/user-attachments/assets/4933530d-0232-46be-a9b4-580596d1d3fd" />
+
 
 ------------------------------------------------------------------------
 
@@ -128,14 +132,14 @@ aws $EP s3api put-object --bucket $BUCKET \
 
 ### Evidence
 
-![Evidence Image 2 --- Bucket creation and file
-preparation](lab6_evidence_images/image2.png)
+<img width="775" height="417" alt="image" src="https://github.com/user-attachments/assets/5f797f17-d569-4fc7-a69b-82191ee69a81" />
 
-![Evidence Image 3 --- Public and internal objects uploaded with
-classification tags](lab6_evidence_images/image3.png)
 
-![Evidence Image 4 --- Confidential object uploaded with confidential
-classification](lab6_evidence_images/image4.png)
+<img width="776" height="460" alt="image" src="https://github.com/user-attachments/assets/ffe44ff7-5d59-4825-92b8-f922f61c72d8" />
+
+
+<img width="776" height="222" alt="image" src="https://github.com/user-attachments/assets/119a6116-f9e0-40f6-863b-79474a68b78f" />
+
 
 ## Step 4 --- List the objects
 
@@ -167,8 +171,8 @@ Value: confidential
 
 ### Evidence
 
-![Evidence Image 5 --- Object listing and confidential classification
-tag](lab6_evidence_images/image5.png)
+<img width="771" height="445" alt="image" src="https://github.com/user-attachments/assets/5b03eeaa-8e4b-47bc-bddf-4a89b694246a" />
+
 
 ## Data Classification Table
 
@@ -248,11 +252,11 @@ aws $EP s3api get-bucket-policy \
 
 ### Evidence
 
-![Evidence Image 6 --- Creation of the public bucket
-policy](lab6_evidence_images/image6.png)
+<img width="772" height="237" alt="image" src="https://github.com/user-attachments/assets/f43ed22e-cbb4-45e2-a029-84065ad8c6fc" />
 
-![Evidence Image 7 --- Public bucket policy applied and
-displayed](lab6_evidence_images/image7.png)
+
+<img width="775" height="372" alt="image" src="https://github.com/user-attachments/assets/f2f87ad5-ea92-4e7c-bebb-e8550b56a3dc" />
+
 
 ## Step 4 --- Test anonymous access
 
@@ -274,8 +278,8 @@ Patient: Ahmad bin Ali, Diagnosis: confidential
 
 ### Evidence
 
-![Evidence Image 8 --- Anonymous request successfully accessed the
-confidential record](lab6_evidence_images/image8.png)
+<img width="776" height="151" alt="image" src="https://github.com/user-attachments/assets/94cde563-aed7-47c5-a7bb-ef45c5c167a0" />
+
 
 ## Result
 
@@ -348,8 +352,8 @@ curl -s -o /dev/null -w 'anonymous read now: HTTP %{http_code}\n' \
 
 ### Evidence
 
-![Evidence Image 9 --- Block Public Access configuration and
-anonymous-read retest](lab6_evidence_images/image9.png)
+<img width="772" height="370" alt="image" src="https://github.com/user-attachments/assets/ef3588c3-a68d-44e8-9e0f-9538aa988296" />
+
 
 ## Result
 
@@ -448,11 +452,11 @@ profile.
 
 ### Evidence
 
-![Evidence Image 10 --- DataAnalyst IAM policy and access-key
-creation](lab6_evidence_images/image10.png)
+<img width="770" height="407" alt="image" src="https://github.com/user-attachments/assets/1b01cf06-abc2-41c2-af5f-5c94b2c23f14" />
 
-![Evidence Image 11 --- Analyst secret/access-key value
-configuration](lab6_evidence_images/image11.png)
+
+<img width="772" height="50" alt="image" src="https://github.com/user-attachments/assets/0dbbed56-eabf-4d96-9c73-f8a9e4233bd3" />
+
 
 ## Step 4 --- Create a bucket policy that allows internal but denies confidential
 
@@ -481,8 +485,8 @@ The important statements were:
 
 ### Evidence
 
-![Evidence Image 12 --- Bucket policy with internal Allow and
-confidential Deny](lab6_evidence_images/image12.png)
+<img width="766" height="396" alt="image" src="https://github.com/user-attachments/assets/e89ae118-60ca-4bd4-b0e3-11464ba096ce" />
+
 
 ## Step 5 --- Test internal access
 
@@ -501,8 +505,8 @@ internal: ALLOWED
 
 ### Evidence
 
-![Evidence Image 13 --- Analyst successfully accessed the internal
-object](lab6_evidence_images/image13.png)
+<img width="767" height="415" alt="image" src="https://github.com/user-attachments/assets/e8b43e89-0f4f-44d5-ab27-832b7534caac" />
+
 
 ## Step 6 --- Check the analyst IAM policy
 
@@ -517,8 +521,8 @@ read access.
 
 ### Evidence
 
-![Evidence Image 14 --- Analyst IAM policy showing broad
-permissions](lab6_evidence_images/image14.png)
+<img width="746" height="385" alt="image" src="https://github.com/user-attachments/assets/519d67e3-4ea4-4601-bcd3-a803c49cb36b" />
+
 
 ## Step 7 --- Test confidential access
 
@@ -534,8 +538,8 @@ object metadata.
 
 ### Evidence
 
-![Evidence Image 15 --- Analyst confidential-object
-request](lab6_evidence_images/image15.png)
+<img width="746" height="310" alt="image" src="https://github.com/user-attachments/assets/38e2011c-8c2f-4272-9955-9e7a186f9597" />
+
 
 ## Result and policy evaluation
 
@@ -600,8 +604,8 @@ echo $KEY_ID
 
 ### Evidence
 
-![Evidence Image 16 --- KMS key creation and encryption
-configuration](lab6_evidence_images/image16.png)
+<img width="761" height="395" alt="image" src="https://github.com/user-attachments/assets/bdfb15d6-7e90-4356-8f61-caec596eff2e" />
+
 
 ## Step 2 --- Create the encryption configuration
 
@@ -629,8 +633,8 @@ aws $EP s3api get-bucket-encryption --bucket $BUCKET
 
 ### Evidence
 
-![Evidence Image 17 --- Bucket default SSE-KMS encryption
-configuration](lab6_evidence_images/image17.png)
+<img width="772" height="435" alt="image" src="https://github.com/user-attachments/assets/fc6f66ec-ebd4-4ced-b14e-f5e521734218" />
+
 
 ## Step 4 --- Upload an object without encryption flags
 
@@ -661,8 +665,8 @@ True
 
 ### Evidence
 
-![Evidence Image 18 --- Object protected automatically with aws:kms and
-BucketKeyEnabled](lab6_evidence_images/image18.png)
+<img width="772" height="402" alt="image" src="https://github.com/user-attachments/assets/e3b1e546-cdb6-4453-9ab6-ee38907dcd48" />
+
 
 ## Result
 
@@ -704,8 +708,8 @@ The URL was stored in the `URL` variable and tested with `curl`.
 
 ### Evidence
 
-![Evidence Image 19 --- Generated presigned URL and successful
-access](lab6_evidence_images/image19.png)
+<img width="770" height="262" alt="image" src="https://github.com/user-attachments/assets/c7754beb-d1dd-42ca-ace9-46084302c3a9" />
+
 
 The first request returned:
 
@@ -723,8 +727,8 @@ The URL contains information such as:
 
 ### Evidence
 
-![Evidence Image 20 --- Presigned URL tested after the expiry
-period](lab6_evidence_images/image20.png)
+<img width="732" height="121" alt="image" src="https://github.com/user-attachments/assets/4d28790d-71d9-4dd9-86e6-479f40c401d2" />
+
 
 The supplied LocalStack evidence returned HTTP 200 after expiry. This is
 consistent with the lab manual's warning that LocalStack may not always
@@ -771,8 +775,8 @@ It should therefore be:
 
 ### Evidence
 
-![Evidence Image 21 --- SecureTransport Deny
-policy](lab6_evidence_images/image21.png)
+<img width="755" height="417" alt="image" src="https://github.com/user-attachments/assets/47df50cf-b785-4c77-8211-22df3c035e5a" />
+
 
 ## Step 2 --- Observe the bucket-wide effect
 
@@ -789,8 +793,8 @@ endpoint.
 
 ### Evidence
 
-![Evidence Image 22 --- Bucket contents while the SecureTransport policy
-was present](lab6_evidence_images/image22.png)
+<img width="737" height="667" alt="image" src="https://github.com/user-attachments/assets/9802475f-2128-450b-a21c-603bcdfcf886" />
+
 
 ## Step 3 --- Remove the policy
 
@@ -803,8 +807,8 @@ no longer existed.
 
 ### Evidence
 
-![Evidence Image 23 --- SecureTransport policy
-removed](lab6_evidence_images/image23.png)
+<img width="772" height="200" alt="image" src="https://github.com/user-attachments/assets/ceb714d4-e24e-4cf5-be50-600423f85370" />
+
 
 ### Simple explanation
 
@@ -842,8 +846,8 @@ Status: Enabled
 
 ### Evidence
 
-![Evidence Image 24 --- Versioning
-enabled](lab6_evidence_images/image24.png)
+<img width="736" height="210" alt="image" src="https://github.com/user-attachments/assets/915063d2-9198-4227-9d8a-e87d698242dd" />
+
 
 ## Step 2 --- Create version 2
 
@@ -873,8 +877,8 @@ aws $EP s3api put-object \
 
 ### Evidence
 
-![Evidence Image 25 --- Creation of the second and third object
-versions](lab6_evidence_images/image25.png)
+<img width="776" height="406" alt="image" src="https://github.com/user-attachments/assets/b33aba94-a212-48ce-8d4a-a63787d094f9" />
+
 
 ## Step 4 --- List all versions
 
@@ -891,8 +895,8 @@ The evidence showed multiple versions, including the older version with
 
 ### Evidence
 
-![Evidence Image 26 --- Multiple versions of the confidential
-record](lab6_evidence_images/image26.png)
+<img width="772" height="235" alt="image" src="https://github.com/user-attachments/assets/35f71007-7428-4663-82b4-6ffbb1a1b3f7" />
+
 
 ## Step 5 --- Delete the object normally
 
@@ -906,8 +910,8 @@ The response indicated that a delete marker was created.
 
 ### Evidence
 
-![Evidence Image 27 --- Delete marker created after deleting the
-object](lab6_evidence_images/image27.png)
+<img width="756" height="357" alt="image" src="https://github.com/user-attachments/assets/6f13347a-199d-4ce7-9dd9-762ff149e7d7" />
+
 
 ## Step 6 --- Recover the old version
 
@@ -925,8 +929,8 @@ The evidence showed that the original record could still be recovered.
 
 ### Evidence
 
-![Evidence Image 28 --- Original confidential record recovered from an
-old version](lab6_evidence_images/image28.png)
+<img width="760" height="407" alt="image" src="https://github.com/user-attachments/assets/e9eafed8-3274-4f3c-82ac-582dbb5e3136" />
+
 
 ## Result
 
@@ -1018,8 +1022,8 @@ AbortIncompleteUploads       Enabled
 
 ### Evidence
 
-![Evidence Image 29 --- Lifecycle rules configured and
-enabled](lab6_evidence_images/image29.png)
+<img width="745" height="332" alt="image" src="https://github.com/user-attachments/assets/b8460b05-75c9-443e-8da6-cf02bbb76af4" />
+
 
 ### Simple explanation
 
@@ -1050,8 +1054,8 @@ The key was initially enabled.
 
 ### Evidence
 
-![Evidence Image 30 --- KMS key initially enabled, then
-disabled](lab6_evidence_images/image30.png)
+<img width="737" height="292" alt="image" src="https://github.com/user-attachments/assets/05dc9405-35d7-4994-bdbc-c23ada1b4d3f" />
+
 
 ## Step 4 --- Disable the KMS key
 
@@ -1099,8 +1103,8 @@ returned after the key was disabled.
 
 ### Evidence
 
-![Evidence Image 32 --- Object read after KMS key disable/scheduled
-deletion](lab6_evidence_images/image32.png)
+<img width="777" height="305" alt="image" src="https://github.com/user-attachments/assets/1bfc7966-be1a-4cb6-9dfc-3fc181949f4c" />
+
 
 ## Result
 
